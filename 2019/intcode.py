@@ -1,35 +1,77 @@
 import threading
+from typing import List, Optional, Union
 
-def get_digit(number, n):
-        return number // 10**n % 10
+def get_digit(number: int, n: int) -> int:
+    """
+    Get the nth digit from the right of a number (0-indexed).
+    
+    Args:
+        number: The number to extract from
+        n: Position from right (0 = rightmost)
+        
+    Returns:
+        The digit at position n
+    """
+    return number // 10**n % 10
 
 class Intcode(threading.Thread):
+    """
+    Intcode computer implementation with threading support.
     
-    def __init__(self, commandstr):
+    This class implements the Intcode computer from Advent of Code 2019,
+    supporting all opcodes and parameter modes with threading capabilities
+    for concurrent execution.
+    """
+    
+    def __init__(self, commandstr: str):
+        """
+        Initialize the Intcode computer.
+        
+        Args:
+            commandstr: Comma-separated string of integers representing the program
+        """
         threading.Thread.__init__(self)
-        self.commands = [int(i) for i in commandstr.split(',')]
+        self.commands: List[int] = [int(i) for i in commandstr.split(',')]
 
-        #add extra program memory
+        # Add extra program memory
         for n in range(25000):
             self.commands.append(0)
 
-        self.inputs = []
-        self.outputs = []
-        self.halted = False
-        self.needInput = False
+        self.inputs: List[int] = []
+        self.outputs: List[int] = []
+        self.halted: bool = False
+        self.needInput: bool = False
 
-    def add_input(self, val):
+    def add_input(self, val: int) -> None:
+        """
+        Add an input value to the input queue.
+        
+        Args:
+            val: Integer value to add to inputs
+        """
         self.inputs.append(val)
 
-    def wait_for_output(self):
+    def wait_for_output(self) -> None:
+        """
+        Wait until an output is available.
+        
+        This method blocks until the computer produces at least one output.
+        """
         while len(self.outputs) == 0:
             wait = 0
 
-    def run(self):
+    def run(self) -> List[int]:
+        """
+        Execute the Intcode program.
         
-        rel_base = 0
-
-        pc = 0
+        This method runs the Intcode program starting from position 0,
+        processing opcodes until a halt instruction is encountered.
+        
+        Returns:
+            List of output values produced by the program
+        """
+        rel_base: int = 0
+        pc: int = 0
         while pc < len(self.commands):
             instr = self.commands[pc]
             op = get_digit(instr,1)*10 + get_digit(instr,0)
