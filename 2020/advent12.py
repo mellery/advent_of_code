@@ -1,8 +1,8 @@
 import math
 
-filename = "input12.txt"
-#filename = "input12_ex1.txt"
-#filename = "input12_ex2.txt"
+filename = "day12_input.txt"
+#filename = "day12_ex1.txt"
+#filename = "day12_ex2.txt"
 
 file1 = open(filename, 'r') 
 lines = file1.readlines() 

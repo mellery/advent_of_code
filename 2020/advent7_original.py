@@ -1,8 +1,8 @@
 from collections import deque
 
-filename = "input7.txt"
-#filename = "input7_ex.txt" #32
-#filename = "input7_ex2.txt" #126
+filename = "day7_input.txt"
+#filename = "day7_ex.txt" #32
+#filename = "day7_ex2.txt" #126
 
 file1 = open(filename, 'r') 
 lines = file1.readlines() 

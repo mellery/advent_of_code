@@ -5,8 +5,8 @@ import copy
 #1 = black
 #0 = white (default)
 
-filename = "input24.txt"
-#filename = "input24_ex1.txt"
+filename = "day24_input.txt"
+#filename = "day24_ex1.txt"
 
 file1 = open(filename, 'r') 
 lines = file1.readlines() 

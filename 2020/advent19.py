@@ -1,9 +1,9 @@
 import re
 
-#filename = "input19.txt"
+#filename = "day19_input.txt"
 filename = "input19p2.txt"
-#filename = "input19_ex1.txt"
-#filename = "input19_ex2.txt"
+#filename = "day19_ex1.txt"
+#filename = "day19_ex2.txt"
 
 file1 = open(filename, 'r') 
 lines = file1.readlines() 

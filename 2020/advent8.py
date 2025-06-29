@@ -1,6 +1,6 @@
 
-filename = "input8.txt"
-#filename = "input8_ex.txt"
+filename = "day8_input.txt"
+#filename = "day8_ex.txt"
 file1 = open(filename, 'r') 
 lines = file1.readlines() 
 

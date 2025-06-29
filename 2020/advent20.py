@@ -8,8 +8,8 @@ import random
 
 import re
 
-filename = "input20.txt"
-#filename = "input20_ex1.txt"
+filename = "day20_input.txt"
+#filename = "day20_ex1.txt"
 
 file1 = open(filename, 'r') 
 lines = file1.readlines() 
@@ -278,11 +278,11 @@ for y in range(0,edge_len-1):
 print_assembled_ids(assembled)
 
 
-if filename == "input20_ex1.txt":
+if filename == "day20_ex1.txt":
     Puzzle[1951].flipY()
     
 #setup first piece
-if filename == "input20.txt":
+if filename == "day20_input.txt":
     Puzzle[1831].rotate90()
     Puzzle[1831].flipY()
     

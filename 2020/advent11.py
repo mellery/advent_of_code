@@ -1,7 +1,7 @@
 import copy 
 
-#filename = "input11_ex1.txt"
-filename = "input11.txt"
+#filename = "day11_ex1.txt"
+filename = "day11_input.txt"
 
 file1 = open(filename, 'r') 
 lines = file1.readlines() 

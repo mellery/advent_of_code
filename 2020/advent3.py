@@ -24,8 +24,8 @@ def find_trees(filename, run, rise):
     return trees
 
 
-#filename = 'c:\\src\\advent20\\input3_ex.txt'
-filename = 'c:\\src\\advent20\\input3.txt'
+#filename = 'day3_ex.txt'
+filename = 'day3_input.txt'
 
 rise = 1
 run = 3

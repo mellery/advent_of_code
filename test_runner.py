@@ -143,10 +143,18 @@ class AdventTestRunner:
         start_time = time.time()
         result = TestResult(year, day)
         
+        original_cwd = os.getcwd()
+        solution_dir = str(file_path.parent)
+        
         try:
             # Change to the solution directory for relative imports
-            original_cwd = os.getcwd()
-            os.chdir(file_path.parent)
+            os.chdir(solution_dir)
+            
+            # Add current directory to Python path for local imports
+            if '.' not in sys.path:
+                sys.path.insert(0, '.')
+            if solution_dir not in sys.path:
+                sys.path.insert(0, solution_dir)
             
             # Use just the filename after changing directory
             module = self.load_module(file_path.name)
@@ -231,6 +239,13 @@ class AdventTestRunner:
         
         finally:
             os.chdir(original_cwd)
+            
+            # Clean up sys.path to avoid polluting for subsequent tests
+            if '.' in sys.path and sys.path[0] == '.':
+                sys.path.remove('.')
+            if solution_dir in sys.path:
+                sys.path.remove(solution_dir)
+            
             result.execution_time = time.time() - start_time
         
         return result

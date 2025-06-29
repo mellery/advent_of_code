@@ -1,9 +1,9 @@
 import itertools
 import math
 
-filename = "input10.txt"
-#filename = "input10_ex1.txt"
-#filename = "input10_ex2.txt"
+filename = "day10_input.txt"
+#filename = "day10_ex1.txt"
+#filename = "day10_ex2.txt"
 file1 = open(filename, 'r') 
 lines = file1.readlines() 
 

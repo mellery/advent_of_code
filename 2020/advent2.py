@@ -1,4 +1,4 @@
-file1 = open('c:\\src\\advent20\\input2.txt', 'r') 
+file1 = open('day2_input.txt', 'r') 
 lines = file1.readlines() 
 
 valid = 0

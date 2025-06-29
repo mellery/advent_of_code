@@ -1,51 +1,51 @@
 from collections import Counter
 
 def get_list_of_numbers(filename):
+    """Parse input file to get initial fish timer values."""
     with open(filename) as f:
-        lines = f.readlines()
-        numbers = []
-        for l in lines:
-            temp = l.split(",")
-            for t in temp:
-                numbers.append(int(t))
-            
-    return numbers
+        line = f.read().strip()
+        return [int(x) for x in line.split(",")]
 
-def update_fish(fish):
-    new_fish = 0
-    for i in range(0,len(fish)):
-        fish[i] -= 1
-        if fish[i] < 0:
-            fish[i] = 6
-            new_fish +=1
-    for i in range(0,new_fish):
-        fish.append(8)
-    return(fish)
-
-
+def simulate_fish(initial_fish, days):
+    """
+    Efficiently simulate lanternfish population using counter approach.
+    
+    Instead of tracking individual fish, we track how many fish have each timer value.
+    This reduces the problem from exponential to linear time complexity.
+    """
+    # Count fish by their timer values (0-8)
+    fish_count = Counter(initial_fish)
+    
+    for day in range(days):
+        # Fish with timer 0 spawn new fish
+        spawning_fish = fish_count[0]
+        
+        # Shift all timer values down by 1
+        new_count = Counter()
+        for timer in range(1, 9):
+            new_count[timer - 1] = fish_count[timer]
+        
+        # Fish that spawned reset to timer 6
+        new_count[6] += spawning_fish
+        
+        # New fish start with timer 8
+        new_count[8] = spawning_fish
+        
+        fish_count = new_count
+    
+    return sum(fish_count.values())
 
 def part1(filename):
-        fish = get_list_of_numbers(filename)
-        days = 256
-        for x in range(0,days):
-            print("day",x)
-            fish = update_fish(fish)
-        print(len(fish))
-
+    """Part 1: Simulate for 80 days."""
+    fish = get_list_of_numbers(filename)
+    result = simulate_fish(fish, 80)
+    return result
 
 def part2(filename):
-        fish = get_list_of_numbers(filename)
-
-        fish = Counter(fish)
-
-        for i in range(256):
-            spawn = fish[0]
-            for i in range(8):
-                fish[i] = fish[i+1]
-            fish[8] = spawn
-            fish[6] += spawn
-
-        print(sum(fish.values()))
+    """Part 2: Simulate for 256 days."""
+    fish = get_list_of_numbers(filename)
+    result = simulate_fish(fish, 256)
+    return result
         
 
 def main():
