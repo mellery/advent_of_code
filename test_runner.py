@@ -106,13 +106,19 @@ class AdventTestRunner:
             # Convert to string if it's a Path object
             if hasattr(file_path, 'parent'):
                 file_str = str(file_path)
-                # Add the root directory to sys.path for utils import
+                # Add both the solution directory and root directory to sys.path
+                solution_dir = str(file_path.parent)
                 root_dir = str(file_path.parent.parent)
             else:
                 file_str = str(file_path)
                 # When called with just filename, add parent directories
+                solution_dir = str(Path.cwd())
                 root_dir = str(Path.cwd().parent)
             
+            # Add solution directory first for local imports (like intcode)
+            if solution_dir not in sys.path:
+                sys.path.insert(0, solution_dir)
+            # Add root directory for utils import
             if root_dir not in sys.path:
                 sys.path.insert(0, root_dir)
                 
