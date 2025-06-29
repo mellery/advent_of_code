@@ -1,8 +1,8 @@
 {
   "2015": {
     "1": {
-      "part1": null,
-      "part2": null
+      "part1": 74,
+      "part2": 1795
     },
     "2": {
       "part1": null,
@@ -11,42 +11,42 @@
   },
   "2017": {
     "1": {
-      "part1": null,
-      "part2": null
+      "part1": 1341,
+      "part2": 1348
     }
   },
   "2019": {
     "1": {
-      "part1": null,
-      "part2": null
+      "part1": 3386686,
+      "part2": 5077155
     },
     "11": {
-      "part1": null,
-      "part2": null
+      "part1": 1709,
+      "part2": "PGUEHCJH"
     },
     "13": {
-      "part1": null,
-      "part2": null
+      "part1": 326,
+      "part2": 15988
     },
     "15": {
-      "part1": null,
-      "part2": null
+      "part1": 210,
+      "part2": 290
     },
     "17": {
-      "part1": null,
-      "part2": null
+      "part1": 7780,
+      "part2": 1075882
     },
     "18": {
-      "part1": null,
-      "part2": null
+      "part1": 4544,
+      "part2": 1692
     },
     "19": {
       "part1": 231,
-      "part2": null
+      "part2": 9210745
     },
     "2": {
-      "part1": null,
-      "part2": null
+      "part1": 3790645,
+      "part2": 6577
     },
     "20": {
       "part1": null,
@@ -65,60 +65,60 @@
       "part2": null
     },
     "5": {
-      "part1": null,
-      "part2": null
+      "part1": 12896948,
+      "part2": 7704130
     },
     "7": {
-      "part1": null,
-      "part2": null
+      "part1": 24405,
+      "part2": 8271623
     },
     "9": {
-      "part1": null,
-      "part2": null
+      "part1": 2406950601,
+      "part2": 83239
     }
   },
   "2020": {
     "1": {
-      "part1": null,
-      "part2": null
+      "part1": 485739,
+      "part2": 161109702
     },
     "15": {
-      "part1": null,
-      "part2": null
+      "part1": 1085,
+      "part2": 10652
     },
     "19": {
-      "part1": null,
-      "part2": null
+      "part1": 124,
+      "part2": 228
     }
   },
   "2021": {
     "1": {
-      "part1": null,
-      "part2": null
+      "part1": 1557,
+      "part2": 1608
     },
     "10": {
-      "part1": null,
-      "part2": null
+      "part1": 321237,
+      "part2": 2360030859
     },
     "11": {
-      "part1": null,
-      "part2": null
+      "part1": 1697,
+      "part2": 344
     },
     "12": {
-      "part1": null,
-      "part2": null
+      "part1": 3497,
+      "part2": 93686
     },
     "13": {
-      "part1": null,
-      "part2": null
+      "part1": 647,
+      "part2": "HEJHJRCJ"
     },
     "14": {
-      "part1": null,
-      "part2": null
+      "part1": 2233,
+      "part2": 2884513602164
     },
     "15": {
-      "part1": null,
-      "part2": null
+      "part1": 604,
+      "part2": 2907
     },
     "16": {
       "part1": null,
@@ -137,8 +137,8 @@
       "part2": null
     },
     "2": {
-      "part1": null,
-      "part2": null
+      "part1": 2215080,
+      "part2": 1864715580
     },
     "20": {
       "part1": null,
@@ -165,32 +165,32 @@
       "part2": null
     },
     "3": {
-      "part1": null,
-      "part2": null
+      "part1": 749376,
+      "part2": 2372923
     },
     "4": {
-      "part1": null,
-      "part2": null
+      "part1": 33348,
+      "part2": 8112
     },
     "5": {
-      "part1": null,
-      "part2": null
+      "part1": 6189,
+      "part2": 19164
     },
     "6": {
-      "part1": null,
-      "part2": null
+      "part1": 359344,
+      "part2": 1629570219571
     },
     "7": {
-      "part1": null,
-      "part2": null
+      "part1": 328187,
+      "part2": 91257582
     },
     "8": {
-      "part1": null,
-      "part2": null
+      "part1": 416,
+      "part2": 1043697
     },
     "9": {
-      "part1": null,
-      "part2": null
+      "part1": 506,
+      "part2": 931200
     }
   },
   "2022": {
@@ -297,8 +297,8 @@
   },
   "2023": {
     "1": {
-      "part1": "Legacy solution executed",
-      "part2": "Legacy solution executed"
+      "part1": 54953,
+      "part2": 53868
     }
   }
 }
