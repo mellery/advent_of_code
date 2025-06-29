@@ -1,68 +1,135 @@
-def get_first_digit(line):
-    for i, c in enumerate(line):
-        if c.isdigit():
-            return c
+#!/usr/bin/env python3
+"""
+Advent of Code 2023 Day 1: Migrated Solution
+https://adventofcode.com/2023/day/1
 
+Enhanced solution using AdventSolution base class.
+Migrated from legacy implementation.
+"""
 
-digits = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
+import sys
+from pathlib import Path
+from typing import Any, List, Dict, Optional, Tuple
 
+# Add utils to path
+sys.path.append(str(Path(__file__).parent.parent))
+from utils import AdventSolution, InputParser
 
-def replace_first_word(line, rev=False):
-    for x in range(0, len(line)):
-        if line[x].isdigit():
-            if rev:
-                line = line[::-1]
-            return line
-        temp = line[x:]
-        for i, d in enumerate(digits):
-            w = d
-            if rev:
-                w = d[::-1]
-            if temp.startswith(w):
-                line = line.replace(w, str(i+1))
+class Day1Solution(AdventSolution):
+    """Solution for 2023 Day 1: Trebuchet?!"""
+
+    def __init__(self):
+        super().__init__(2023, 1, "Trebuchet?!")
+        self.digits = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine']
+
+    def get_first_digit(self, line: str) -> str:
+        """Get the first digit from a line."""
+        for c in line:
+            if c.isdigit():
+                return c
+        return ''
+
+    def replace_first_word(self, line: str, rev: bool = False) -> str:
+        """Replace first word digit with numeric digit."""
+        for x in range(len(line)):
+            if line[x].isdigit():
                 if rev:
                     line = line[::-1]
                 return line
-    if rev:
-        line = line[::-1]
-    return line
+            temp = line[x:]
+            for i, d in enumerate(self.digits):
+                w = d
+                if rev:
+                    w = d[::-1]
+                if temp.startswith(w):
+                    line = line.replace(w, str(i+1))
+                    if rev:
+                        line = line[::-1]
+                    return line
+        if rev:
+            line = line[::-1]
+        return line
+
+    def part1(self, input_data: str) -> int:
+        """
+        Solve part 1: Find first and last digit in each line.
+        
+        Args:
+            input_data: Raw input data as string
+            
+        Returns:
+            Sum of all calibration values
+        """
+        parser = InputParser(input_data)
+        lines = parser.as_lines()
+        
+        total = 0
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            a = self.get_first_digit(line)
+            b = self.get_first_digit(line[::-1])
+            if a and b:
+                total += int(a + b)
+        
+        return total
+
+    def part2(self, input_data: str) -> int:
+        """
+        Solve part 2: Handle word digits (one, two, etc.).
+        
+        Args:
+            input_data: Raw input data as string
+            
+        Returns:
+            Sum of all calibration values including word digits
+        """
+        parser = InputParser(input_data)
+        lines = parser.as_lines()
+        
+        total = 0
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # Process line for first digit (including words)
+            processed_line = self.replace_first_word(line)
+            a = self.get_first_digit(processed_line)
+            
+            # Process reversed line for last digit (including words)
+            processed_rev = self.replace_first_word(line[::-1], rev=True)
+            b = self.get_first_digit(processed_rev[::-1])
+            
+            if a and b:
+                total += int(a + b)
+        
+        return total
 
 
-def part1():
-    total = 0
-    with open(infile, 'r') as file:
-        for line in file:
-            a = get_first_digit(line)
-            b = get_first_digit(line[::-1])
-            v = int(a+b)
-            # print(v)
-            total += v
-    print(total)
 
 
-def part2(infile):
-    total = 0
-    with open(infile, 'r') as file:
-        for line in file:
-            temp = line
-            line = replace_first_word(line)
-            a = get_first_digit(line)
+# Legacy compatibility functions for test runner
+def part1(input_data: str = None) -> int:
+    """Part 1 function compatible with test runner."""
+    solution = Day1Solution()
+    if input_data is None:
+        input_data = solution._load_input()
+    return solution.part1(input_data)
 
-            line = replace_first_word(temp[::-1], rev=True)
-            b = get_first_digit(line[::-1])
-            v = int(a+b)
+def part2(input_data: str = None) -> int:
+    """Part 2 function compatible with test runner."""
+    solution = Day1Solution()
+    if input_data is None:
+        input_data = solution._load_input()
+    return solution.part2(input_data)
 
-            total += v
-        print(total)
+def main():
+    """Main execution function."""
+    solution = Day1Solution()
+    solution.main()
 
 
-# infile = 'test.txt'
-# infile = 'test2.txt'
-infile = 'day1_input.txt'
-
-# part1(infile)
-part2(infile)
-
-# line = '9qb95oneightsf'
-# newline = replace_first_word(line[::-1],rev=True)
-# print(line, newline)
+if __name__ == "__main__":
+    main()
