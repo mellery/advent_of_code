@@ -1,9 +1,20 @@
+#!/usr/bin/env python3
 """
 Advent of Code 2019 Day 7: Amplification Circuit
-Optimized solution using non-threaded Intcode execution.
+https://adventofcode.com/2019/day/7
+
+Enhanced solution using AdventSolution base class.
+Migrated from legacy implementation with improvements.
 """
+
+import sys
+from pathlib import Path
+from typing import Any, List, Dict, Optional, Tuple
 import itertools
-from typing import List, Tuple
+
+# Add utils to path
+sys.path.append(str(Path(__file__).parent.parent))
+from utils import AdventSolution, InputParser
 
 
 class IntcodeSimple:
@@ -135,104 +146,136 @@ class IntcodeSimple:
         return False
 
 
-def solve_part1(program: str) -> int:
-    """Solve part 1: Find maximum signal through amplifier chain."""
-    max_signal = 0
-    
-    for phase_sequence in itertools.permutations([0, 1, 2, 3, 4]):
-        signal = 0
+class Day7Solution(AdventSolution):
+    """Solution for 2019 Day 7: Amplification Circuit."""
+
+    def __init__(self):
+        super().__init__(2019, 7, "Amplification Circuit")
+
+    def part1(self, input_data: str) -> int:
+        """
+        Solve part 1: Find maximum signal through amplifier chain.
         
-        # Run through each amplifier in sequence
-        for phase in phase_sequence:
-            amp = IntcodeSimple(program)
-            amp.add_input(phase)  # Phase setting
-            amp.add_input(signal)  # Input signal
+        Args:
+            input_data: Raw input data as string
             
-            # Run until output
-            amp.run_until_output_or_halt()
-            signal = amp.outputs[0]
+        Returns:
+            Maximum signal that can be sent to thrusters
+        """
+        program = input_data.strip()
+        max_signal = 0
         
-        max_signal = max(max_signal, signal)
-    
-    return max_signal
-
-
-def solve_part2(program: str) -> int:
-    """Solve part 2: Find maximum signal with feedback loop."""
-    max_signal = 0
-    
-    for phase_sequence in itertools.permutations([5, 6, 7, 8, 9]):
-        # Initialize all amplifiers
-        amps = [IntcodeSimple(program) for _ in range(5)]
-        
-        # Set phase settings
-        for i, phase in enumerate(phase_sequence):
-            amps[i].add_input(phase)
-        
-        # Start with signal 0 to amplifier A
-        signal = 0
-        amp_index = 0
-        
-        # Run feedback loop until amplifier E halts
-        while not amps[4].halted:
-            current_amp = amps[amp_index]
-            current_amp.add_input(signal)
+        for phase_sequence in itertools.permutations([0, 1, 2, 3, 4]):
+            signal = 0
             
-            # Run until output or halt
-            produced_output = current_amp.run_until_output_or_halt()
+            # Run through each amplifier in sequence
+            for phase in phase_sequence:
+                amp = IntcodeSimple(program)
+                amp.add_input(phase)  # Phase setting
+                amp.add_input(signal)  # Input signal
+                
+                # Run until output
+                amp.run_until_output_or_halt()
+                signal = amp.outputs[0]
             
-            if produced_output:
-                signal = current_amp.outputs[-1]  # Get latest output
-            
-            # Move to next amplifier
-            amp_index = (amp_index + 1) % 5
+            max_signal = max(max_signal, signal)
         
-        max_signal = max(max_signal, signal)
-    
-    return max_signal
+        return max_signal
+
+    def part2(self, input_data: str) -> int:
+        """
+        Solve part 2: Find maximum signal with feedback loop.
+        
+        Args:
+            input_data: Raw input data as string
+            
+        Returns:
+            Maximum signal with feedback loop configuration
+        """
+        program = input_data.strip()
+        max_signal = 0
+        
+        for phase_sequence in itertools.permutations([5, 6, 7, 8, 9]):
+            # Initialize all amplifiers
+            amps = [IntcodeSimple(program) for _ in range(5)]
+            
+            # Set phase settings
+            for i, phase in enumerate(phase_sequence):
+                amps[i].add_input(phase)
+            
+            # Start with signal 0 to amplifier A
+            signal = 0
+            amp_index = 0
+            
+            # Run feedback loop until amplifier E halts
+            while not amps[4].halted:
+                current_amp = amps[amp_index]
+                current_amp.add_input(signal)
+                
+                # Run until output or halt
+                produced_output = current_amp.run_until_output_or_halt()
+                
+                if produced_output:
+                    signal = current_amp.outputs[-1]  # Get latest output
+                
+                # Move to next amplifier
+                amp_index = (amp_index + 1) % 5
+            
+            max_signal = max(max_signal, signal)
+        
+        return max_signal
+
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
+        # Test case from problem description
+        test_program = "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0"
+        
+        if expected_part1 is None:
+            expected_part1 = 43210  # Expected result for test case
+        
+        test_result1 = self.part1(test_program)
+        if test_result1 != expected_part1:
+            print(f"Part 1 test failed: expected {expected_part1}, got {test_result1}")
+            return False
+        
+        # Test case for part 2
+        test_program2 = "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5"
+        if expected_part2 is None:
+            expected_part2 = 139629729  # Expected result for test case
+        
+        test_result2 = self.part2(test_program2)
+        if test_result2 != expected_part2:
+            print(f"Part 2 test failed: expected {expected_part2}, got {test_result2}")
+            return False
+        
+        print("✅ All validation tests passed!")
+        return True
 
 
-def solve_day7(filename: str = "day7_input.txt") -> Tuple[int, int]:
-    """Solve both parts of day 7."""
-    # Try to read from file, fall back to embedded program
-    try:
-        with open(filename, 'r') as f:
-            program = f.read().strip()
-    except FileNotFoundError:
-        # Embedded program from original solution
-        program = "3,8,1001,8,10,8,105,1,0,0,21,34,59,68,85,102,183,264,345,426,99999,3,9,101,3,9,9,102,3,9,9,4,9,99,3,9,1002,9,4,9,1001,9,2,9,1002,9,2,9,101,5,9,9,102,5,9,9,4,9,99,3,9,1001,9,4,9,4,9,99,3,9,101,3,9,9,1002,9,2,9,1001,9,5,9,4,9,99,3,9,1002,9,3,9,1001,9,5,9,102,3,9,9,4,9,99,3,9,1001,9,1,9,4,9,3,9,1001,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,102,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,101,1,9,9,4,9,99,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,1002,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,101,2,9,9,4,9,99,3,9,1001,9,1,9,4,9,3,9,101,1,9,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,1002,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,1001,9,1,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,1,9,4,9,99,3,9,1002,9,2,9,4,9,3,9,101,1,9,9,4,9,3,9,1001,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,102,2,9,9,4,9,3,9,1001,9,1,9,4,9,3,9,1002,9,2,9,4,9,3,9,1001,9,2,9,4,9,3,9,101,2,9,9,4,9,99,3,9,1001,9,1,9,4,9,3,9,1002,9,2,9,4,9,3,9,101,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,1002,9,2,9,4,9,3,9,101,1,9,9,4,9,3,9,102,2,9,9,4,9,3,9,101,1,9,9,4,9,3,9,102,2,9,9,4,9,3,9,101,2,9,9,4,9,99"
-    
-    part1 = solve_part1(program)
-    part2 = solve_part2(program)
-    
-    return part1, part2
-
-
-# Test runner compatible functions
-def part1(input_data) -> int:
+# Legacy compatibility functions for test runner
+def part1(input_data: str = None) -> int:
     """Part 1 function compatible with test runner."""
-    part1_result, _ = solve_day7()
-    return part1_result
+    solution = Day7Solution()
+    if input_data is None:
+        # Use actual input file
+        input_data = solution._load_input()
+    return solution.part1(input_data)
 
 
-def part2(input_data) -> int:
+def part2(input_data: str = None) -> int:
     """Part 2 function compatible with test runner."""
-    _, part2_result = solve_day7()
-    return part2_result
+    solution = Day7Solution()
+    if input_data is None:
+        # Use actual input file
+        input_data = solution._load_input()
+    return solution.part2(input_data)
 
 
-# Legacy functions for backward compatibility
-def day7p1() -> int:
-    """Legacy function for part 1."""
-    return part1(None)
-
-
-def day7p2() -> int:
-    """Legacy function for part 2."""
-    return part2(None)
+def main():
+    """Main execution function."""
+    solution = Day7Solution()
+    solution.main()
 
 
 if __name__ == "__main__":
-    part1_result, part2_result = solve_day7()
-    print(f"Part 1: {part1_result}")
-    print(f"Part 2: {part2_result}")
+    main()

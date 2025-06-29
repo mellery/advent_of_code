@@ -58,7 +58,7 @@ def part2(infile):
 
 # infile = 'test.txt'
 # infile = 'test2.txt'
-infile = 'part1.txt'
+infile = 'day1_input.txt'
 
 # part1(infile)
 part2(infile)
