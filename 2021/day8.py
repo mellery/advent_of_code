@@ -156,7 +156,7 @@ def part1(filename):
                     if option[i] == temp:
                         ans.append(str(i))
             ans_str = "".join(ans)
-            print(ans_str)
+            #print(ans_str)
             count += int(ans_str)
                 
             
@@ -171,7 +171,7 @@ def main():
     print(part1("day8_input.txt"))
 
     #print(part2("day8_ex1.txt"))
-    #print(part2("day8_input.txt"))
+    print(part2("day8_input.txt"))
 
 if __name__ == "__main__":
     main()

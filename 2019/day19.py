@@ -6,39 +6,105 @@ INSTRUCTIONS = "109,424,203,1,21101,11,0,0,1106,0,282,21102,18,1,0,1106,0,259,21
 # Simple cache without lru_cache to avoid overhead
 beam_cache = {}
 
+# Pre-parsed instructions for faster execution
+parsed_instructions = [int(x) for x in INSTRUCTIONS.split(',')]
+
 def checkPos(x, y):
-    """Check if position (x,y) is affected by the tractor beam. Uses simple caching for efficiency."""
+    """Check if position (x,y) is affected by the tractor beam. Optimized with aggressive caching."""
     if x < 0 or y < 0:
         return 0
     
     if (x, y) in beam_cache:
         return beam_cache[(x, y)]
     
-    program = Intcode(INSTRUCTIONS)
-    program.start()
+    # Ultra-fast Intcode execution for this specific program
+    # Since we know the program structure, we can optimize specifically for it
+    memory = parsed_instructions.copy()
+    memory.extend([0] * 1000)  # Extra memory
     
-    # Wait for first input request
-    while not program.halted and not program.needInput:
-        pass
-    if program.halted:
-        beam_cache[(x, y)] = 0
-        return 0
+    pc = 0
+    relative_base = 0
+    inputs = [x, y]
+    input_idx = 0
+    
+    def get_param(mode, param):
+        if mode == 0: # position
+            return memory[param] if param < len(memory) else 0
+        elif mode == 1: # immediate
+            return param
+        elif mode == 2: # relative
+            return memory[relative_base + param] if relative_base + param < len(memory) else 0
+    
+    def set_param(mode, param, value):
+        if mode == 0: # position
+            if param < len(memory):
+                memory[param] = value
+        elif mode == 2: # relative
+            if relative_base + param < len(memory):
+                memory[relative_base + param] = value
+    
+    while pc < len(memory):
+        instruction = memory[pc]
+        opcode = instruction % 100
+        mode1 = (instruction // 100) % 10
+        mode2 = (instruction // 1000) % 10
+        mode3 = (instruction // 10000) % 10
         
-    program.add_input(x)
+        if opcode == 99: # halt
+            break
+        elif opcode == 1: # add
+            val1 = get_param(mode1, memory[pc+1])
+            val2 = get_param(mode2, memory[pc+2])
+            set_param(mode3, memory[pc+3], val1 + val2)
+            pc += 4
+        elif opcode == 2: # multiply
+            val1 = get_param(mode1, memory[pc+1])
+            val2 = get_param(mode2, memory[pc+2])
+            set_param(mode3, memory[pc+3], val1 * val2)
+            pc += 4
+        elif opcode == 3: # input
+            if input_idx < len(inputs):
+                set_param(mode1, memory[pc+1], inputs[input_idx])
+                input_idx += 1
+            pc += 2
+        elif opcode == 4: # output
+            val = get_param(mode1, memory[pc+1])
+            beam_cache[(x, y)] = val
+            return val
+        elif opcode == 5: # jump if true
+            val1 = get_param(mode1, memory[pc+1])
+            val2 = get_param(mode2, memory[pc+2])
+            if val1 != 0:
+                pc = val2
+            else:
+                pc += 3
+        elif opcode == 6: # jump if false
+            val1 = get_param(mode1, memory[pc+1])
+            val2 = get_param(mode2, memory[pc+2])
+            if val1 == 0:
+                pc = val2
+            else:
+                pc += 3
+        elif opcode == 7: # less than
+            val1 = get_param(mode1, memory[pc+1])
+            val2 = get_param(mode2, memory[pc+2])
+            set_param(mode3, memory[pc+3], 1 if val1 < val2 else 0)
+            pc += 4
+        elif opcode == 8: # equals
+            val1 = get_param(mode1, memory[pc+1])
+            val2 = get_param(mode2, memory[pc+2])
+            set_param(mode3, memory[pc+3], 1 if val1 == val2 else 0)
+            pc += 4
+        elif opcode == 9: # adjust relative base
+            val = get_param(mode1, memory[pc+1])
+            relative_base += val
+            pc += 2
+        else:
+            break
     
-    # Wait for second input request  
-    while not program.halted and not program.needInput:
-        pass
-    if program.halted:
-        beam_cache[(x, y)] = 0
-        return 0
-        
-    program.add_input(y)
-    program.wait_for_output()
-    
-    result = program.outputs[-1] if program.outputs else 0
-    beam_cache[(x, y)] = result
-    return result
+    # If we get here without output, assume 0
+    beam_cache[(x, y)] = 0
+    return 0
 
 
 def day19p1():
@@ -54,37 +120,61 @@ def day19p1():
 
 def day19p2():
     """Find the top-left corner of the first 100x100 square that fits in the beam."""
-    # Much simpler approach: scan y coordinates and use the original algorithm
-    # but with smarter starting points
+    # Optimized algorithm based on tracking beam edges
+    # We look for the first row where the beam is wide enough to fit the square
     
-    # The beam follows predictable angles, so we can start at a reasonable Y
-    y = 99  # Need at least y=99 to fit a 100-tall square
-    x = 0
+    # Start from the minimum possible y
+    y = 99
+    x = 0  # Keep track of left edge
     
-    while y < 1500:  # reasonable limit
-        # For each y, find where the beam starts (left edge)
-        # Start searching from a reasonable x based on previous iterations
-        found_beam = False
-        start_x = max(0, x - 5)  # start near the last known good x
+    while y < 1500:
+        # Find the left edge of the beam at row y
+        # Start searching from where we were before (beam left edge grows)
+        while not checkPos(x, y) and x < y * 2:
+            x += 1
         
-        for test_x in range(start_x, start_x + y):  # beam grows with y
-            if checkPos(test_x, y):
-                x = test_x
-                found_beam = True
-                break
-        
-        if not found_beam:
+        # If we can't find beam at this y, skip
+        if x >= y * 2:
             y += 1
+            x = max(0, x - 5)  # backtrack a bit
             continue
         
-        # Check if 100x100 square fits at (x, y)
-        # Only need to check if top-right and bottom-left corners are in beam
+        # Check if 100x100 square fits starting at (x, y)
+        # The square fits if both corners that define the boundaries are in the beam:
+        # - Top-right: (x+99, y) - must be in beam for width
+        # - Bottom-left: (x, y+99) - must be in beam for height
+        
         if checkPos(x + 99, y) and checkPos(x, y + 99):
             return x * 10000 + y
         
         y += 1
     
-    return -1  # Not found
+    return -1
+
+
+def day19p2_fallback():
+    """Fallback method if slope calculation fails."""
+    y = 99
+    
+    while y < 1500:
+        # Find left edge of beam at this y
+        left_x = None
+        for x in range(y):
+            if checkPos(x, y):
+                left_x = x
+                break
+        
+        if left_x is None:
+            y += 1
+            continue
+        
+        # Check if 100x100 square fits
+        if checkPos(left_x + 99, y) and checkPos(left_x, y + 99):
+            return left_x * 10000 + y
+        
+        y += 1
+    
+    return -1
 
 def part1(filename):
     return day19p1()
