@@ -3,6 +3,9 @@ Shared utilities for Advent of Code solutions.
 
 This module provides common functions used across multiple solutions
 to reduce code duplication and improve maintainability.
+
+ENHANCED VERSION: This module now integrates with the enhanced utils
+package while maintaining full backward compatibility.
 """
 
 from typing import List, Union, Optional, Any, Callable
@@ -10,6 +13,24 @@ import time
 import argparse
 import os
 from pathlib import Path
+
+# Import enhanced utilities if available
+try:
+    # Try importing from the utils package subdirectory
+    import sys
+    from pathlib import Path
+    utils_dir = Path(__file__).parent / 'utils'
+    if utils_dir.exists():
+        sys.path.insert(0, str(Path(__file__).parent))
+        from utils.advent_base import AdventSolution
+        from utils.input_parsing import InputParser
+        from utils.timing import timer
+        from utils.testing import quick_test
+        ENHANCED_UTILS_AVAILABLE = True
+    else:
+        ENHANCED_UTILS_AVAILABLE = False
+except ImportError:
+    ENHANCED_UTILS_AVAILABLE = False
 
 
 def get_list_of_numbers(filename: str) -> List[int]:
@@ -255,3 +276,124 @@ def run_solution(part1_func: Callable, part2_func: Callable,
         print("Part 2:")
         result2 = part2_func(input_file)
         print(f"Result: {result2}")
+
+
+# Enhanced utilities integration
+def get_enhanced_parser(input_data: str):
+    """
+    Get an enhanced InputParser if available, otherwise use basic parsing.
+    
+    Args:
+        input_data: Input data as string
+        
+    Returns:
+        InputParser instance if enhanced utils available, None otherwise
+    """
+    if ENHANCED_UTILS_AVAILABLE:
+        return InputParser(input_data)
+    return None
+
+
+def create_enhanced_solution(year: int, day: int, title: str = ""):
+    """
+    Create an enhanced AdventSolution if available.
+    
+    Args:
+        year: Year of the challenge
+        day: Day number  
+        title: Optional title
+        
+    Returns:
+        AdventSolution instance if enhanced utils available, None otherwise
+    """
+    if ENHANCED_UTILS_AVAILABLE:
+        return AdventSolution(year, day, title)
+    return None
+
+
+def enhanced_validate_solution(part1_func: Callable, part2_func: Callable,
+                              test_input: str, expected_part1: Any = None,
+                              expected_part2: Any = None) -> bool:
+    """
+    Use enhanced validation if available, otherwise fallback to legacy.
+    
+    Args:
+        part1_func: Part 1 function
+        part2_func: Part 2 function
+        test_input: Test input data
+        expected_part1: Expected part 1 result
+        expected_part2: Expected part 2 result
+        
+    Returns:
+        True if validation passes
+    """
+    if ENHANCED_UTILS_AVAILABLE:
+        return quick_test(part1_func, part2_func, test_input, expected_part1, expected_part2)
+    else:
+        return validate_solution(part1_func, part2_func, test_input, expected_part1, expected_part2)
+
+
+def enhanced_timer(func: Callable) -> Callable:
+    """
+    Use enhanced timer if available, otherwise fallback to legacy.
+    
+    Args:
+        func: Function to time
+        
+    Returns:
+        Wrapped function with timing
+    """
+    if ENHANCED_UTILS_AVAILABLE:
+        return timer(func)
+    else:
+        return timing_decorator(func)
+
+
+# Migration helper functions
+def suggest_enhanced_migration(solution_file: str):
+    """
+    Print suggestions for migrating to enhanced utils.
+    
+    Args:
+        solution_file: Path to the solution file being analyzed
+    """
+    if not ENHANCED_UTILS_AVAILABLE:
+        print("Enhanced utils package not available.")
+        return
+        
+    print(f"\n🔄 Enhanced Utils Migration Suggestions for {solution_file}:")
+    print("=" * 60)
+    print("1. Replace function-based approach with class-based AdventSolution")
+    print("2. Use InputParser for flexible input handling")
+    print("3. Add comprehensive testing with TestSuite")
+    print("4. Enable performance monitoring with built-in timing")
+    print("5. Use enhanced validation and benchmarking")
+    print("\nRun 'from utils import create_solution_template' for boilerplate generation.")
+
+
+def print_enhanced_status():
+    """Print the status of enhanced utilities."""
+    if ENHANCED_UTILS_AVAILABLE:
+        print("✅ Enhanced utilities are available")
+        print("   - AdventSolution base class")
+        print("   - Advanced InputParser") 
+        print("   - Performance profiling")
+        print("   - Comprehensive testing framework")
+    else:
+        print("⚠️  Enhanced utilities not available - using legacy functions only")
+        print("   Consider installing the enhanced utils package for:")
+        print("   - Better input parsing")
+        print("   - Automatic timing and benchmarking") 
+        print("   - Comprehensive testing capabilities")
+
+
+# Legacy compatibility notice
+def _show_legacy_notice():
+    """Show notice about enhanced utilities availability."""
+    import os
+    if os.getenv('ADVENT_UTILS_QUIET') != '1' and not ENHANCED_UTILS_AVAILABLE:
+        print("💡 Legacy utils mode. Enhanced features available in utils/ package.")
+
+
+# Show notice on import
+_show_legacy_notice()
