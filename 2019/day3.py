@@ -189,6 +189,6 @@ for c in crossings:
 
 print("min dist",min(manhat))
 print("fewest steps",min(shortpath))
-plt.show()
+#plt.show()
 
 
