@@ -1,5 +1,5 @@
 from intcode import *
-        
+
 #Part 1
 def day2p1():
     p1 = 12
@@ -21,5 +21,12 @@ def day2p2():
             if machine.commands[0] == 19690720:
                 return 100*p1+p2
 
-print(day2p1())
-print(day2p2())
+def part1(filename):
+    return day2p1()
+
+def part2(filename):
+    return day2p2()
+
+if __name__ == "__main__":
+    print(day2p1())
+    print(day2p2())

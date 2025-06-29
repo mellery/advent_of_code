@@ -17,5 +17,12 @@ def day5p1():
 def day5p2():
     return day5(5)
 
-print(day5p1())
-print(day5p2())
+def part1(filename):
+    return day5p1()
+
+def part2(filename):
+    return day5p2()
+
+if __name__ == "__main__":
+    print(day5p1())
+    print(day5p2())

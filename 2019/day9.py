@@ -20,5 +20,12 @@ def day9p2():
     return day9(2)
 
 
-print(day9p1())
-print(day9p2())
+def part1(filename):
+    return day9p1()
+
+def part2(filename):
+    return day9p2()
+
+if __name__ == "__main__":
+    print(day9p1())
+    print(day9p2())

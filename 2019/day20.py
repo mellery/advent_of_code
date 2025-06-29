@@ -189,6 +189,17 @@ def day20p1(input_file):
     #searchMaze('@', locked, 0)
     print("--- %s seconds ---" % (time.time() - start_time))
 
-day20p1("day20_ex1.txt") #23 #had to reverse GF
-#day20p1("day20_ex2.txt")  #doesn't map right
-#day20p1("day20_input.txt")
+def part1(filename):
+    try:
+        day20p1(filename)
+        return distanceTo('@','Z')
+    except:
+        return "Error: NetworkX or matplotlib not available"
+
+def part2(filename):
+    return "Not implemented"
+
+if __name__ == "__main__":
+    day20p1("day20_ex1.txt") #23 #had to reverse GF
+    #day20p1("day20_ex2.txt")  #doesn't map right
+    #day20p1("day20_input.txt")

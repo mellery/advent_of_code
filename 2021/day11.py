@@ -73,18 +73,30 @@ def print_map():
             line += f"{str(grid[(x,y)])}"
         print(line)
 
-def part1(filename, steps):
+def part1(filename, steps=100):
+    global grid, row, col, flashcount
+    grid = {}
+    row = 0
+    col = 0
+    flashcount = 0
+    
     load_map(filename)
     #print("Before any steps:")
     #print_map()
 
     for s in range(1,steps+1):
         step()
-        print(f"\nAfter step {s}:")
-        print_map()
-    print(flashcount)        
+        #print(f"\nAfter step {s}:")
+        #print_map()
+    return flashcount        
 
 def part2(filename):
+    global grid, row, col, flashcount
+    grid = {}
+    row = 0
+    col = 0
+    flashcount = 0
+    
     load_map(filename)
     steps = 0
 
@@ -97,11 +109,11 @@ def part2(filename):
                     synced = False
         step()
         steps += 1
-        print(steps)
+        #print(steps)
         if synced == True:
             steps -= 1
             break
-    print(steps)
+    return steps
     
     
 
