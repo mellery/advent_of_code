@@ -1,6 +1,6 @@
 import random
 import math
-filename = '/home/mike/src/advent19/input14.txt' #1000000000000 ore
+filename = "day14_input.txt" #1000000000000 ore
 
 #filename = 'c:\\src\\advent19\\input14_ex1.txt'
 #filename = 'c:\\src\\advent19\\input14_ex2.txt'
