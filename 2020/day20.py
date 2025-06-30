@@ -218,22 +218,151 @@ class Day20Solution(AdventSolution):
         
         return corners
 
+    def assemble_image(self, puzzle: Dict[int, Piece]) -> List[str]:
+        """
+        Assemble the complete image from puzzle pieces using backtracking.
+        
+        Args:
+            puzzle: Dictionary of puzzle pieces
+            
+        Returns:
+            List of strings representing the assembled image (borders removed)
+        """
+        grid_size = int(math.sqrt(len(puzzle)))
+        grid = [[None for _ in range(grid_size)] for _ in range(grid_size)]
+        
+        def get_all_orientations(piece):
+            """Get all 8 possible orientations of a piece."""
+            orientations = []
+            current = copy.deepcopy(piece)
+            
+            # 4 rotations
+            for _ in range(4):
+                orientations.append(copy.deepcopy(current))
+                current.rotate90()
+            
+            # Flip and 4 more rotations
+            current.flipX()
+            for _ in range(4):
+                orientations.append(copy.deepcopy(current))
+                current.rotate90()
+            
+            return orientations
+        
+        def fits(piece, row, col):
+            """Check if a piece fits at the given position."""
+            # Check top neighbor
+            if row > 0:
+                top_neighbor = grid[row-1][col]
+                if top_neighbor and piece.sideA() != top_neighbor.sideD():
+                    return False
+            
+            # Check left neighbor  
+            if col > 0:
+                left_neighbor = grid[row][col-1]
+                if left_neighbor and piece.sideC() != left_neighbor.sideB():
+                    return False
+            
+            # Check right neighbor
+            if col < grid_size - 1:
+                right_neighbor = grid[row][col+1]
+                if right_neighbor and piece.sideB() != right_neighbor.sideC():
+                    return False
+            
+            # Check bottom neighbor
+            if row < grid_size - 1:
+                bottom_neighbor = grid[row+1][col]
+                if bottom_neighbor and piece.sideD() != bottom_neighbor.sideA():
+                    return False
+            
+            return True
+        
+        def solve(used_pieces):
+            """Backtracking solver."""
+            # Find next empty position
+            for row in range(grid_size):
+                for col in range(grid_size):
+                    if grid[row][col] is None:
+                        # Try each unused piece
+                        for piece_id, piece in puzzle.items():
+                            if piece_id in used_pieces:
+                                continue
+                            
+                            # Try all orientations
+                            for oriented_piece in get_all_orientations(piece):
+                                if fits(oriented_piece, row, col):
+                                    grid[row][col] = oriented_piece
+                                    used_pieces.add(piece_id)
+                                    
+                                    if solve(used_pieces):
+                                        return True
+                                    
+                                    # Backtrack
+                                    grid[row][col] = None
+                                    used_pieces.remove(piece_id)
+                        
+                        return False  # No piece fits here
+            
+            return True  # All positions filled
+        
+        # Start solving
+        if not solve(set()):
+            return []  # Failed to solve
+        
+        # Remove borders and combine into final image
+        for row in range(grid_size):
+            for col in range(grid_size):
+                if grid[row][col]:
+                    grid[row][col].removeBorder()
+        
+        # Combine pieces into final image
+        piece_height = 8  # 10 - 2 (border removal)
+        final_image = []
+        
+        for row in range(grid_size):
+            for line_idx in range(piece_height):
+                line = ""
+                for col in range(grid_size):
+                    if grid[row][col] and line_idx < len(grid[row][col].image2):
+                        line += grid[row][col].image2[line_idx]
+                final_image.append(line)
+        
+        return final_image
+
     def look_for_monsters(self, p: Piece) -> int:
         """Look for sea monsters in the assembled image."""
+        # Sea monster pattern:
+        #                   # 
+        # #    ##    ##    ###
+        #  #  #  #  #  #  #   
+        
+        monster_pattern = [
+            "                  # ",
+            "#    ##    ##    ###",
+            " #  #  #  #  #  #   "
+        ]
+        
         monsters = 0
-        for l in range(1, len(p.image)-1):
-            body = re.search('#....##....##....###', p.image[l])
-            if body:
-                head_pattern = '..................#.'
-                tail_pattern = '.#..#..#..#..#..#...'
+        image = p.image
+        
+        # Check each possible position for a sea monster
+        for row in range(len(image) - len(monster_pattern) + 1):
+            for col in range(len(image[0]) - len(monster_pattern[0]) + 1):
+                # Check if monster pattern matches at this position
+                is_monster = True
+                for pattern_row in range(len(monster_pattern)):
+                    for pattern_col in range(len(monster_pattern[pattern_row])):
+                        if monster_pattern[pattern_row][pattern_col] == '#':
+                            if (row + pattern_row >= len(image) or 
+                                col + pattern_col >= len(image[row + pattern_row]) or
+                                image[row + pattern_row][col + pattern_col] != '#'):
+                                is_monster = False
+                                break
+                    if not is_monster:
+                        break
                 
-                start, end = body.span()
-                if start < len(p.image[l-1]) and end <= len(p.image[l-1]):
-                    head_match = re.search(head_pattern, p.image[l-1][start:end])
-                    if head_match and start < len(p.image[l+1]) and end <= len(p.image[l+1]):
-                        tail_match = re.search(tail_pattern, p.image[l+1][start:end])
-                        if tail_match:
-                            monsters += 1
+                if is_monster:
+                    monsters += 1
         
         return monsters
 
@@ -267,31 +396,11 @@ class Day20Solution(AdventSolution):
             Water roughness count
         """
         puzzle = self.parse_input(input_data)
-        corners = self.find_corners(puzzle)
         
-        if not corners or len(corners) != 4:
-            return "Cannot find exactly 4 corners"
-        
-        # For this complex assembly process, we'll use a simplified approach
-        # In the original, this involved complex graph traversal and piece alignment
-        # Here we'll return the known answer structure for demonstration
-        
-        # Create a mock assembled image for monster detection
-        edge_len = int(math.sqrt(len(puzzle)))
-        
-        # Remove borders from all pieces
-        for piece in puzzle.values():
-            piece.removeBorder()
-        
-        # Create a large assembled image (simplified version)
-        # In reality, this would require the full assembly algorithm
-        total_size = edge_len * 8  # 8x8 after border removal
-        assembled_image = []
-        
-        # For demonstration, create a pattern that might contain monsters
-        for i in range(total_size):
-            line = '#' * total_size
-            assembled_image.append(line)
+        # Assemble the full image
+        assembled_image = self.assemble_image(puzzle)
+        if not assembled_image:
+            return "Failed to assemble image"
         
         # Create a piece to search for monsters
         search_piece = Piece()
@@ -299,6 +408,8 @@ class Day20Solution(AdventSolution):
         
         # Try different orientations to find monsters
         max_monsters = 0
+        best_config = None
+        
         for rotation in [0, 90, 180, 270]:
             for flip in ['none', 'x', 'y', 'xy']:
                 test_piece = copy.deepcopy(search_piece)
@@ -317,13 +428,52 @@ class Day20Solution(AdventSolution):
                     test_piece.flipY()
                 
                 monsters = self.look_for_monsters(test_piece)
-                max_monsters = max(max_monsters, monsters)
+                if monsters > max_monsters:
+                    max_monsters = monsters
+                    best_config = (rotation, flip)
         
-        # Count total # symbols
-        total_pounds = sum(line.count('#') for line in assembled_image)
+        # Count total # symbols in the correctly oriented image
+        if best_config:
+            final_piece = copy.deepcopy(search_piece)
+            rotation, flip = best_config
+            
+            if rotation == 90:
+                final_piece.rotate90()
+            elif rotation == 180:
+                final_piece.rotate180()
+            elif rotation == 270:
+                final_piece.rotate270()
+            
+            if 'x' in flip:
+                final_piece.flipX()
+            if 'y' in flip:
+                final_piece.flipY()
+            
+            total_pounds = sum(line.count('#') for line in final_piece.image)
+        else:
+            total_pounds = sum(line.count('#') for line in assembled_image)
         
         # Each monster has 15 # symbols
         return total_pounds - (max_monsters * 15)
+
+
+# Legacy compatibility functions for test runner
+def part1(input_data: str = None) -> int:
+    """Part 1 function compatible with test runner."""
+    solution = Day20Solution()
+    if input_data is None:
+        # Use actual input file
+        input_data = solution._load_input()
+    return solution.part1(input_data)
+
+
+def part2(input_data: str = None) -> int:
+    """Part 2 function compatible with test runner."""
+    solution = Day20Solution()
+    if input_data is None:
+        # Use actual input file
+        input_data = solution._load_input()
+    return solution.part2(input_data)
 
 
 def main():
