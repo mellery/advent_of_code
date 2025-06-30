@@ -83,3 +83,4 @@ cookie.txt
 *.backup
 
 *_input.txt
+*/test_performance_history.json

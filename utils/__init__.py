@@ -61,6 +61,33 @@ from .testing import (
     quick_test, test_with_examples
 )
 
+# Algorithm libraries for reusable components
+try:
+    from .algorithms import (
+        pathfinding, grid, vm, parsing, math_utils
+    )
+    from .algorithms.pathfinding import (
+        dijkstra_grid, bfs_shortest_path, a_star_search, find_path
+    )
+    from .algorithms.grid import (
+        Grid, Direction, parse_grid, neighbors_4, neighbors_8,
+        manhattan_distance, euclidean_distance
+    )
+    from .algorithms.vm import (
+        IntcodeVM, SimpleAssemblyVM, run_intcode_program
+    )
+    from .algorithms.parsing import (
+        ExpressionEvaluator, PatternMatcher, parse_numbers,
+        parse_coordinate_pairs as algo_parse_coords, extract_patterns
+    )
+    from .algorithms.math_utils import (
+        gcd, lcm, is_prime, prime_factors, fibonacci,
+        manhattan_distance as math_manhattan_distance
+    )
+    ALGORITHMS_AVAILABLE = True
+except ImportError:
+    ALGORITHMS_AVAILABLE = False
+
 # Legacy compatibility - import from original utils.py
 import sys
 from pathlib import Path
@@ -152,6 +179,51 @@ __all__ = [
     'run_solution'
 ]
 
+# Add algorithm library components if available
+if ALGORITHMS_AVAILABLE:
+    __all__.extend([
+        # Algorithm modules
+        'pathfinding',
+        'grid',
+        'vm',
+        'parsing',
+        'math_utils',
+        
+        # Pathfinding algorithms
+        'dijkstra_grid',
+        'bfs_shortest_path', 
+        'a_star_search',
+        'find_path',
+        
+        # Grid utilities
+        'Grid',
+        'Direction',
+        'parse_grid',
+        'neighbors_4',
+        'neighbors_8',
+        'manhattan_distance',
+        'euclidean_distance',
+        
+        # Virtual machine components
+        'IntcodeVM',
+        'SimpleAssemblyVM',
+        'run_intcode_program',
+        
+        # Parsing utilities
+        'ExpressionEvaluator',
+        'PatternMatcher',
+        'parse_numbers',
+        'extract_patterns',
+        
+        # Mathematical utilities
+        'gcd',
+        'lcm',
+        'is_prime',
+        'prime_factors',
+        'fibonacci',
+        'math_manhattan_distance'
+    ])
+
 
 def create_solution_template(year: int, day: int, title: str = "") -> str:
     """
@@ -178,6 +250,8 @@ from pathlib import Path
 # Add utils to path
 sys.path.append(str(Path(__file__).parent.parent))
 from utils import AdventSolution, InputParser
+# Optional: Import algorithm libraries for advanced problems
+# from utils import Grid, dijkstra_grid, IntcodeVM, gcd, fibonacci
 
 
 class Day{day}Solution(AdventSolution):
