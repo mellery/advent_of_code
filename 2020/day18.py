@@ -121,7 +121,7 @@ class ExpressionEvaluator:
         i = 1
         
         while i < len(tokens):
-            if i + 1 < len(tokens):
+            if i + 1 < len(tokens) and tokens[i].type == 'operator' and tokens[i + 1].type == 'number':
                 operator = tokens[i].value
                 operand = int(tokens[i + 1].value)
                 
@@ -157,8 +157,10 @@ class ExpressionEvaluator:
         i = 0
         while i < len(working_tokens):
             if (i + 2 < len(working_tokens) and 
+                working_tokens[i].type == 'number' and
                 working_tokens[i + 1].type == 'operator' and 
-                working_tokens[i + 1].value == '+'):
+                working_tokens[i + 1].value == '+' and
+                working_tokens[i + 2].type == 'number'):
                 
                 left_val = int(working_tokens[i].value)
                 right_val = int(working_tokens[i + 2].value)
@@ -185,18 +187,22 @@ class ExpressionEvaluator:
         Returns:
             Tuple of (start_index, end_index) or (-1, -1) if no parentheses
         """
-        depth = 0
-        start = -1
-        
+        # Find the first complete parentheses group with no nested parentheses inside
         for i, token in enumerate(tokens):
             if token.type == 'lparen':
-                if depth == 0:
-                    start = i
-                depth += 1
-            elif token.type == 'rparen':
-                depth -= 1
-                if depth == 0 and start != -1:
-                    return start, i
+                # Look for the matching closing parenthesis
+                depth = 1
+                for j in range(i + 1, len(tokens)):
+                    if tokens[j].type == 'lparen':
+                        depth += 1
+                    elif tokens[j].type == 'rparen':
+                        depth -= 1
+                        if depth == 0:
+                            # Check if this group has no nested parentheses
+                            has_nested = any(t.type in ['lparen', 'rparen'] for t in tokens[i+1:j])
+                            if not has_nested:
+                                return i, j
+                            break
         
         return -1, -1
     
@@ -437,25 +443,29 @@ class Day18Solution(AdventSolution):
 
 
 # Legacy functions for test runner compatibility
-def part1(filename: str) -> int:
+def part1(input_data: str = None) -> int:
     """Legacy part1 function for test runner compatibility."""
-    try:
-        with open(filename, 'r') as f:
-            input_data = f.read()
-    except FileNotFoundError:
-        return -1
+    if input_data is None:
+        # Auto-load input file
+        try:
+            with open('/home/mike/src/advent_of_code/2020/day18_input.txt', 'r') as f:
+                input_data = f.read()
+        except FileNotFoundError:
+            return -1
     
     solution = Day18Solution()
     return solution.part1(input_data)
 
 
-def part2(filename: str) -> int:
+def part2(input_data: str = None) -> int:
     """Legacy part2 function for test runner compatibility."""
-    try:
-        with open(filename, 'r') as f:
-            input_data = f.read()
-    except FileNotFoundError:
-        return -1
+    if input_data is None:
+        # Auto-load input file
+        try:
+            with open('/home/mike/src/advent_of_code/2020/day18_input.txt', 'r') as f:
+                input_data = f.read()
+        except FileNotFoundError:
+            return -1
     
     solution = Day18Solution()
     return solution.part2(input_data)

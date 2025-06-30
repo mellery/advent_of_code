@@ -82,6 +82,9 @@ class MessageValidator:
         Returns:
             True if the message matches the grammar
         """
+        # Clear memoization for each new message
+        self.memo.clear()
+        
         # Use recursive descent parsing
         result = self._parse_recursive(message, 0, start_rule)
         # Check if we consumed the entire message
@@ -378,19 +381,25 @@ aaaabbb"""
 # Legacy compatibility functions for test runner
 def part1(input_data: str = None) -> int:
     """Part 1 function compatible with test runner."""
-    solution = Day19Solution()
     if input_data is None:
-        # Use actual input file
-        input_data = solution._load_input()
+        # Load from the correct path
+        file_path = Path(__file__).parent / "day19_input.txt"
+        with open(file_path, 'r') as f:
+            input_data = f.read()
+    
+    solution = Day19Solution()
     return solution.part1(input_data)
 
 
 def part2(input_data: str = None) -> int:
     """Part 2 function compatible with test runner."""
-    solution = Day19Solution()
     if input_data is None:
-        # Use actual input file
-        input_data = solution._load_input()
+        # Load from the correct path
+        file_path = Path(__file__).parent / "day19_input.txt"
+        with open(file_path, 'r') as f:
+            input_data = f.read()
+    
+    solution = Day19Solution()
     return solution.part2(input_data)
 
 

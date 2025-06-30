@@ -129,6 +129,17 @@ class SpaceImageLayer:
             lines.append(line)
         
         return '\n'.join(lines)
+    
+    def parse_letters_from_art(self) -> str:
+        """
+        Parse ASCII art into letters using shared utility.
+        
+        Returns:
+            String of recognized letters
+        """
+        from utils import parse_ascii_letters
+        art = self.render()
+        return parse_ascii_letters(art, 'thick')
 
 
 class SpaceImage:
@@ -299,6 +310,20 @@ class SpaceImageDecoder:
         final_layer = image.compose_final_image()
         return final_layer.render()
     
+    def decode_password_letters(self, image_data: str) -> str:
+        """
+        Decode the password letters from the image.
+        
+        Args:
+            image_data: Raw image data string
+            
+        Returns:
+            Password as recognized letters
+        """
+        image = self.decode_image(image_data)
+        final_layer = image.compose_final_image()
+        return final_layer.parse_letters_from_art()
+    
     def analyze_image_quality(self, image_data: str) -> Dict:
         """
         Perform comprehensive image quality analysis.
@@ -355,9 +380,9 @@ class Day8Solution(AdventSolution):
             input_data: Raw image data
             
         Returns:
-            Rendered password image
+            Password letters as string
         """
-        return self.decoder.decode_password(input_data)
+        return self.decoder.decode_password_letters(input_data)
     
     def analyze_space_image(self, input_data: str) -> None:
         """

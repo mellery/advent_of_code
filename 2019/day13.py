@@ -222,17 +222,27 @@ class ArcadeGame:
         computer = self.setup_computer()
         computer.start()
         
+        # Wait a bit for initial outputs
+        import time
+        time.sleep(0.01)
+        
         # Collect initial screen
         self._collect_all_outputs(computer)
         
         # Main game loop
         while not computer.halted:
-            # Get AI input
-            joystick_input = self.get_ai_input()
-            self.input_history.append(joystick_input)
+            # Check if computer needs input
+            if computer.needInput:
+                # Get AI input
+                joystick_input = self.get_ai_input()
+                self.input_history.append(joystick_input)
+                
+                # Send input to computer
+                computer.add_input(joystick_input.value)
+                computer.needInput = False
             
-            # Send input to computer
-            computer.add_input(joystick_input.value)
+            # Wait for outputs
+            time.sleep(0.001)
             
             # Collect outputs
             self._collect_all_outputs(computer)
@@ -253,6 +263,10 @@ class ArcadeGame:
         computer = self.setup_computer()
         computer.start()
         
+        # Wait for initial outputs
+        import time
+        time.sleep(0.01)
+        
         # Collect all initial outputs
         self._collect_all_outputs(computer)
         
@@ -265,13 +279,6 @@ class ArcadeGame:
         Args:
             computer: Intcode computer to collect from
         """
-        while not computer.halted and len(computer.outputs) >= 3:
-            x = computer.outputs.pop(0)
-            y = computer.outputs.pop(0)
-            tile_id = computer.outputs.pop(0)
-            self.process_output_triplet(x, y, tile_id)
-        
-        # Handle any remaining outputs after game ends
         while len(computer.outputs) >= 3:
             x = computer.outputs.pop(0)
             y = computer.outputs.pop(0)

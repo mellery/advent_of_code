@@ -239,9 +239,41 @@ class TractorBeam:
         self.beam_bounds[y] = (left_bound, right_bound)
         return (left_bound, right_bound)
     
+    def find_beam_left_edge(self, y: int) -> Optional[int]:
+        """Find the leftmost x coordinate where the beam starts at given y."""
+        # For large y values, use a more conservative search approach
+        # The beam expands roughly linearly, so start with a reasonable estimate
+        
+        # Quick check if there's any beam at all at this y level
+        # Start checking from a reasonable position based on y
+        search_start = max(0, y - 100)  # Start searching a bit before y
+        search_end = y * 2  # Search up to 2*y
+        
+        # First, do a coarse search to find the general area
+        coarse_step = max(1, (search_end - search_start) // 50)
+        found_beam = False
+        coarse_left = search_start
+        
+        for x in range(search_start, search_end, coarse_step):
+            if self.check_point(Point(x, y)):
+                coarse_left = max(search_start, x - coarse_step)
+                found_beam = True
+                break
+        
+        if not found_beam:
+            return None
+        
+        # Now do fine-grained search from the coarse position
+        for x in range(coarse_left, coarse_left + coarse_step + 10):
+            if self.check_point(Point(x, y)):
+                return x
+        
+        return None
+    
     def find_square_position(self, square_size: int) -> Optional[Point]:
         """
         Find the top-left corner of the first square that fits in the beam.
+        Uses a geometric approach based on beam expansion.
         
         Args:
             square_size: Size of the square to fit
@@ -249,24 +281,30 @@ class TractorBeam:
         Returns:
             Top-left corner point of the square, or None if not found
         """
-        # Start from a reasonable minimum y
-        y = square_size - 1
+        # Different approach: find where bottom-left of square aligns with beam
+        # For a square at (x,y), we need:
+        # 1. Point (x + size - 1, y) in beam (top-right)
+        # 2. Point (x, y + size - 1) in beam (bottom-left)
         
-        while y < 1500:  # Reasonable search limit
-            left_bound, right_bound = self.find_beam_bounds(y)
+        # Start from reasonable distance  
+        y = square_size * 5  # Start at a smaller distance
+        
+        while y < 2000:  # Expanded search limit
+            # Find left edge of beam at y + size - 1 (where bottom-left will be)
+            bottom_y = y + square_size - 1
+            bottom_left_x = self.find_beam_left_edge(bottom_y)
             
-            if left_bound is None:
+            if bottom_left_x is None:
                 y += 1
                 continue
             
-            # Check if square fits starting at (left_bound, y)
-            top_left = Point(left_bound, y)
-            top_right = Point(left_bound + square_size - 1, y)
-            bottom_left = Point(left_bound, y + square_size - 1)
+            # The top-left corner would be at (bottom_left_x, y)
+            # Check if the top-right corner (bottom_left_x + size - 1, y) is in beam
+            top_right_x = bottom_left_x + square_size - 1
             
-            if (self.check_point(top_right) and 
-                self.check_point(bottom_left)):
-                return top_left
+            if self.check_point(Point(top_right_x, y)):
+                # Found a valid square! The top-left is at (bottom_left_x, y)
+                return Point(bottom_left_x, y)
             
             y += 1
         

@@ -189,6 +189,17 @@ class PaintingRobot:
         
         return "\n".join(lines)
     
+    def parse_letters_from_art(self) -> str:
+        """
+        Parse ASCII art into letters using shared utility.
+        
+        Returns:
+            String of recognized letters
+        """
+        from utils import parse_ascii_letters
+        art = self.render_painting()
+        return parse_ascii_letters(art, 'thin')
+    
     def get_analysis(self) -> Dict[str, any]:
         """
         Analyze the robot's painting session.
@@ -251,12 +262,12 @@ class Day11Solution(AdventSolution):
             input_data: Intcode program as string
             
         Returns:
-            ASCII art representation of the painted registration
+            Parsed letters from the painted registration
         """
         program = input_data.strip()
         robot = PaintingRobot(starting_color=Color.WHITE)
         robot.run_painting_program(program)
-        return robot.render_painting()
+        return robot.parse_letters_from_art()
     
     def analyze(self, input_data: str) -> None:
         """

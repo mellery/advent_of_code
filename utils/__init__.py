@@ -60,6 +60,9 @@ from .testing import (
     TestCase, TestResult, TestSuite, TestStatus, ValidationHelper,
     quick_test, test_with_examples
 )
+from .ascii_art_parser import (
+    AsciiArtParser, parse_ascii_letters
+)
 
 # Algorithm libraries for reusable components
 try:
@@ -169,6 +172,10 @@ __all__ = [
     'TestStatus',
     'TimingResult',
     'BenchmarkStats',
+    
+    # ASCII Art Parsing
+    'AsciiArtParser',
+    'parse_ascii_letters',
     
     # Legacy compatibility
     'get_digit',
