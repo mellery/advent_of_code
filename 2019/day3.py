@@ -1,194 +1,384 @@
-import numpy as np
-import matplotlib.pyplot as plt
+#!/usr/bin/env python3
+"""
+Advent of Code 2019 - Day 3: Crossed Wires
 
-def ccw(A,B,C):
-    return (C[1]-A[1]) * (B[0]-A[0]) > (B[1]-A[1]) * (C[0]-A[0])
+The gravity assist was successful, and you're well on your way to the Venus refuelling station.
+During the trip, you need to fix a fuel management system by tracing wire paths and finding
+their intersections.
 
-# Return true if line segments AB and CD intersect
-def intersect(A,B,C,D):
-    return ccw(A,C,D) != ccw(B,C,D) and ccw(A,B,C) != ccw(A,B,D)
+Key Concepts:
+- Grid-based path tracing
+- Line segment intersection detection
+- Manhattan distance calculation
+- Path length optimization
+"""
 
-def line(p1, p2):
-    A = (p1[1] - p2[1])
-    B = (p2[0] - p1[0])
-    C = (p1[0]*p2[1] - p2[0]*p1[1])
-    return A, B, -C
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-def intersection(L1, L2):
-    D  = L1[0] * L2[1] - L1[1] * L2[0]
-    Dx = L1[2] * L2[1] - L1[1] * L2[2]
-    Dy = L1[0] * L2[2] - L1[2] * L2[0]
-    if D != 0:
-        x = Dx / D
-        y = Dy / D
-        return x,y
+from utils.advent_base import AdventSolution
+from typing import List, Tuple, Set, Dict, Optional
+from dataclasses import dataclass
+from collections import defaultdict
+
+
+@dataclass(frozen=True)
+class Point:
+    """Represents a 2D point with x,y coordinates."""
+    x: int
+    y: int
+    
+    def manhattan_distance(self, other: 'Point') -> int:
+        """Calculate Manhattan distance to another point."""
+        return abs(self.x - other.x) + abs(self.y - other.y)
+    
+    def __add__(self, other: 'Point') -> 'Point':
+        """Add two points together."""
+        return Point(self.x + other.x, self.y + other.y)
+
+
+@dataclass
+class WireSegment:
+    """Represents a line segment of a wire."""
+    start: Point
+    end: Point
+    direction: str
+    distance: int
+    
+    def get_all_points(self) -> List[Point]:
+        """Get all points along this segment."""
+        points = []
+        current = self.start
+        
+        dx = 1 if self.end.x > self.start.x else (-1 if self.end.x < self.start.x else 0)
+        dy = 1 if self.end.y > self.start.y else (-1 if self.end.y < self.start.y else 0)
+        
+        for _ in range(self.distance):
+            current = Point(current.x + dx, current.y + dy)
+            points.append(current)
+        
+        return points
+    
+    def intersects_with(self, other: 'WireSegment') -> Optional[Point]:
+        """Check if this segment intersects with another segment."""
+        # Check if segments are parallel
+        if self._is_horizontal() == other._is_horizontal():
+            return None
+        
+        if self._is_horizontal():
+            horizontal, vertical = self, other
+        else:
+            horizontal, vertical = other, self
+        
+        # Check if intersection is within both segments
+        h_min_x, h_max_x = min(horizontal.start.x, horizontal.end.x), max(horizontal.start.x, horizontal.end.x)
+        v_min_y, v_max_y = min(vertical.start.y, vertical.end.y), max(vertical.start.y, vertical.end.y)
+        
+        intersection_x = vertical.start.x
+        intersection_y = horizontal.start.y
+        
+        if (h_min_x <= intersection_x <= h_max_x and 
+            v_min_y <= intersection_y <= v_max_y):
+            return Point(intersection_x, intersection_y)
+        
+        return None
+    
+    def _is_horizontal(self) -> bool:
+        """Check if this segment is horizontal."""
+        return self.start.y == self.end.y
+
+
+class Wire:
+    """Represents a complete wire with multiple segments."""
+    
+    def __init__(self, path_string: str):
+        """
+        Initialize wire from path string.
+        
+        Args:
+            path_string: Comma-separated directions like "R8,U5,L5,D3"
+        """
+        self.path_string = path_string
+        self.segments: List[WireSegment] = []
+        self.points_with_steps: Dict[Point, int] = {}
+        self._parse_path()
+    
+    def _parse_path(self) -> None:
+        """Parse the path string into segments and track all points."""
+        directions = {
+            'R': Point(1, 0),
+            'L': Point(-1, 0),
+            'U': Point(0, 1),
+            'D': Point(0, -1)
+        }
+        
+        current_pos = Point(0, 0)
+        total_steps = 0
+        
+        for instruction in self.path_string.split(','):
+            direction = instruction[0]
+            distance = int(instruction[1:])
+            
+            start_pos = current_pos
+            delta = directions[direction]
+            end_pos = Point(
+                current_pos.x + delta.x * distance,
+                current_pos.y + delta.y * distance
+            )
+            
+            # Create segment
+            segment = WireSegment(start_pos, end_pos, direction, distance)
+            self.segments.append(segment)
+            
+            # Track all points with their step counts
+            for i in range(distance):
+                total_steps += 1
+                current_pos = Point(current_pos.x + delta.x, current_pos.y + delta.y)
+                if current_pos not in self.points_with_steps:
+                    self.points_with_steps[current_pos] = total_steps
+    
+    def get_intersections(self, other: 'Wire') -> Set[Point]:
+        """Find all intersection points with another wire."""
+        intersections = set()
+        
+        # Use point sets for faster intersection detection
+        self_points = set(self.points_with_steps.keys())
+        other_points = set(other.points_with_steps.keys())
+        
+        # Find common points (excluding origin)
+        common_points = self_points & other_points
+        origin = Point(0, 0)
+        if origin in common_points:
+            common_points.remove(origin)
+        
+        return common_points
+    
+    def steps_to_point(self, point: Point) -> int:
+        """Get the number of steps to reach a specific point."""
+        return self.points_with_steps.get(point, float('inf'))
+
+
+class WireIntersectionAnalyzer:
+    """Analyzes wire intersections and calculates optimal paths."""
+    
+    def __init__(self, wire1: Wire, wire2: Wire):
+        """Initialize with two wires to analyze."""
+        self.wire1 = wire1
+        self.wire2 = wire2
+        self.intersections = wire1.get_intersections(wire2)
+    
+    def find_closest_intersection(self) -> Tuple[Point, int]:
+        """
+        Find the intersection point closest to the origin by Manhattan distance.
+        
+        Returns:
+            Tuple of (closest_point, manhattan_distance)
+        """
+        if not self.intersections:
+            return Point(0, 0), 0
+        
+        origin = Point(0, 0)
+        closest_point = min(self.intersections, key=lambda p: p.manhattan_distance(origin))
+        distance = closest_point.manhattan_distance(origin)
+        
+        return closest_point, distance
+    
+    def find_shortest_path_intersection(self) -> Tuple[Point, int]:
+        """
+        Find the intersection point with the shortest combined wire path.
+        
+        Returns:
+            Tuple of (optimal_point, total_steps)
+        """
+        if not self.intersections:
+            return Point(0, 0), 0
+        
+        min_steps = float('inf')
+        optimal_point = Point(0, 0)
+        
+        for intersection in self.intersections:
+            steps1 = self.wire1.steps_to_point(intersection)
+            steps2 = self.wire2.steps_to_point(intersection)
+            total_steps = steps1 + steps2
+            
+            if total_steps < min_steps:
+                min_steps = total_steps
+                optimal_point = intersection
+        
+        return optimal_point, min_steps
+    
+    def analyze_all_intersections(self) -> List[Dict]:
+        """
+        Analyze all intersections with comprehensive data.
+        
+        Returns:
+            List of dictionaries containing intersection analysis
+        """
+        origin = Point(0, 0)
+        analyses = []
+        
+        for intersection in self.intersections:
+            analysis = {
+                'point': intersection,
+                'manhattan_distance': intersection.manhattan_distance(origin),
+                'wire1_steps': self.wire1.steps_to_point(intersection),
+                'wire2_steps': self.wire2.steps_to_point(intersection),
+                'total_steps': (self.wire1.steps_to_point(intersection) + 
+                               self.wire2.steps_to_point(intersection))
+            }
+            analyses.append(analysis)
+        
+        return sorted(analyses, key=lambda x: x['manhattan_distance'])
+
+
+class Day3Solution(AdventSolution):
+    """Enhanced solution for Day 3: Crossed Wires."""
+    
+    def __init__(self):
+        super().__init__(year=2019, day=3, title="Crossed Wires")
+    
+    def part1(self, input_data: str) -> int:
+        """
+        Find the Manhattan distance to the closest intersection.
+        
+        Args:
+            input_data: Two lines containing wire path specifications
+            
+        Returns:
+            Manhattan distance to the closest intersection
+        """
+        lines = input_data.strip().split('\n')
+        wire1 = Wire(lines[0])
+        wire2 = Wire(lines[1])
+        
+        analyzer = WireIntersectionAnalyzer(wire1, wire2)
+        closest_point, distance = analyzer.find_closest_intersection()
+        
+        return distance
+    
+    def part2(self, input_data: str) -> int:
+        """
+        Find the fewest combined steps to reach an intersection.
+        
+        Args:
+            input_data: Two lines containing wire path specifications
+            
+        Returns:
+            Minimum combined steps to reach any intersection
+        """
+        lines = input_data.strip().split('\n')
+        wire1 = Wire(lines[0])
+        wire2 = Wire(lines[1])
+        
+        analyzer = WireIntersectionAnalyzer(wire1, wire2)
+        optimal_point, min_steps = analyzer.find_shortest_path_intersection()
+        
+        return min_steps
+    
+    def analyze_intersections(self, input_data: str) -> None:
+        """
+        Provide comprehensive analysis of all wire intersections.
+        
+        Args:
+            input_data: Two lines containing wire path specifications
+        """
+        lines = input_data.strip().split('\n')
+        wire1 = Wire(lines[0])
+        wire2 = Wire(lines[1])
+        
+        analyzer = WireIntersectionAnalyzer(wire1, wire2)
+        
+        print(f"Wire 1 path: {wire1.path_string[:50]}{'...' if len(wire1.path_string) > 50 else ''}")
+        print(f"Wire 2 path: {wire2.path_string[:50]}{'...' if len(wire2.path_string) > 50 else ''}")
+        print(f"Total intersections found: {len(analyzer.intersections)}")
+        
+        if analyzer.intersections:
+            analyses = analyzer.analyze_all_intersections()
+            
+            print("\nTop 5 intersections by Manhattan distance:")
+            for i, analysis in enumerate(analyses[:5]):
+                print(f"{i+1}. Point({analysis['point'].x}, {analysis['point'].y}): "
+                      f"Manhattan={analysis['manhattan_distance']}, "
+                      f"Steps={analysis['total_steps']}")
+            
+            closest_point, closest_distance = analyzer.find_closest_intersection()
+            optimal_point, optimal_steps = analyzer.find_shortest_path_intersection()
+            
+            print(f"\nPart 1 - Closest intersection: {closest_point} (distance: {closest_distance})")
+            print(f"Part 2 - Optimal intersection: {optimal_point} (steps: {optimal_steps})")
+
+
+# Legacy functions for test runner compatibility
+def part1(input_data: str = None) -> int:
+    """Legacy function for test runner compatibility."""
+    if input_data is None:
+        # Auto-discover input file
+        import os
+        day = 3
+        possible_files = [
+            f"day{day}_input.txt",
+            f"day{day}input.txt", 
+            f"input{day}.txt",
+            "input.txt"
+        ]
+        
+        input_file = None
+        for filename in possible_files:
+            if os.path.exists(filename):
+                input_file = filename
+                break
+        
+        if input_file is None:
+            raise FileNotFoundError(f"No input file found for day {day}")
+        
+        with open(input_file, 'r') as f:
+            input_data = f.read()
+    
+    solution = Day3Solution()
+    return solution.part1(input_data)
+
+
+def part2(input_data: str = None) -> int:
+    """Legacy function for test runner compatibility."""
+    if input_data is None:
+        # Auto-discover input file
+        import os
+        day = 3
+        possible_files = [
+            f"day{day}_input.txt",
+            f"day{day}input.txt", 
+            f"input{day}.txt",
+            "input.txt"
+        ]
+        
+        input_file = None
+        for filename in possible_files:
+            if os.path.exists(filename):
+                input_file = filename
+                break
+        
+        if input_file is None:
+            raise FileNotFoundError(f"No input file found for day {day}")
+        
+        with open(input_file, 'r') as f:
+            input_data = f.read()
+    
+    solution = Day3Solution()
+    return solution.part2(input_data)
+
+
+def main():
+    """Main function to run the enhanced solution."""
+    solution = Day3Solution()
+    
+    # If run with analyze flag, show comprehensive analysis
+    if len(sys.argv) > 1 and sys.argv[1] == 'analyze':
+        input_data = solution._load_input()
+        solution.analyze_intersections(input_data)
     else:
-        return False
-
-#p1 = "R8,U5,L5,D3"
-#p2 = "U7,R6,D4,L4"
-
-#p1 = "R75,D30,R83,U83,L12,D49,R71,U7,L72"
-#p2 = "U62,R66,U55,R34,D71,R55,D58,R83"
-
-#p1 = "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51"
-#p2 = "U98,R91,D20,R16,D67,R40,U7,R15,U6,R7"
-
-p1 = "R997,U849,R349,U641,R581,D39,R285,U139,R455,D346,L965,D707,R393,D302,L263,U58,R950,U731,R858,D748,R302,U211,R588,D441,L153,D417,R861,U775,R777,U204,R929,U868,L62,U163,R841,D214,L648,U626,R501,D751,L641,D961,L23,D430,L73,D692,R49,U334,L601,U996,R444,D658,R633,D30,L861,D811,R10,D394,R9,U227,L848,U420,L378,D622,L501,U397,R855,U369,R615,U591,L674,D166,L181,U61,L224,U463,L203,U594,R93,U614,L959,U198,L689,D229,L674,U255,R843,D382,R538,U923,L960,D775,L879,U97,R137,U665,L340,D941,L775,D57,R852,D167,R980,U704,L843,U989,L611,D32,L724,D790,L32,U984,L39,U671,L994,U399,R475,D85,L322,D936,R117,D261,R705,D696,L523,D433,L239,U477,L247,D465,R560,D902,L589,U682,R645,U376,L989,D121,L215,U514,R519,U407,L218,D444,R704,D436,L680,U759,R937,U400,R533,D860,R782,D233,R840,D549,L508,U380,L992,U406,L213,D403,L413,D532,L429,U186,R262,U313,L913,U873,L838,D882,R851,U70,R185,D131,R945,D595,L330,U446,R88,D243,L561,D952,R982,D395,L708,U459,L82,D885,L996,U955,L406,U697,L183,U266,L878,D839,R843,D891,R118,U772,R590,D376,L500,U370,R607,D12,L310,D436,L602,D365,R886,U239,L471,D418,L122,U18,R879,D693,R856,U848,L657,D911,L63,U431,R41,U752,R919,U323,L61,D263,L370,D85,R929,D213,R350,U818,R458,D912,R509,U394,L734,U49,R810,D87,L870,U658,R499,U550,L402,U244,L112,U859,R836,U951,R222,D944,L691,D731,R742,D52,R984,D453,L514,U692,R812,U35,L844,D177,L110,D22,R61,U253,R618,D51,R163,U835,R704,U148,R766,U297,R457,D170,L104,D441,R330,D330,R989,D538,R668,D811,R62,D67,L470,D526,R788,U376,R708,U3,R961"
-p2 = "L1009,D381,R970,U429,L230,D909,R516,D957,R981,U609,L480,D139,L861,U168,L48,U620,R531,D466,L726,D380,R977,D454,L318,D397,R994,U402,L77,U93,L359,D72,R968,D956,L174,D22,R218,U619,R593,U32,L154,U55,L169,U415,L171,U666,R617,U109,L265,U773,R541,D808,L797,U478,R731,U379,R311,D137,L806,U298,R362,D458,L254,D539,R700,U853,R246,D588,L28,U203,L432,U946,R663,D408,R974,U59,L683,D36,L139,U738,L780,U414,L401,D93,R212,D973,L710,U892,L357,D177,R823,D4,R46,D924,L235,D898,R67,U220,L592,U87,R94,U584,R979,D843,L299,D648,L491,U360,R824,D245,L944,D24,R616,U975,L4,U42,L984,U181,R902,D835,L687,D413,L767,U632,L754,U270,R413,U51,L825,D377,L596,U960,L378,U706,L859,D708,L156,D991,L814,U351,R923,D749,L16,D651,R20,D86,R801,U811,L228,U161,L871,U129,R215,U235,L784,U896,R94,U145,R822,U494,R248,D98,R494,U156,L495,U311,R66,D873,L294,D620,L885,U395,R778,D227,R966,U756,L694,D707,R983,D950,R706,D730,R415,U886,L465,D622,L13,D938,R324,D464,R723,U804,R942,D635,L729,D317,L522,U469,R550,D141,R302,U999,L642,U509,R431,D380,R18,D676,R449,D759,L495,U901,R1,D745,L655,U449,L439,D818,R55,D541,R420,U764,L426,D176,L520,U3,L663,D221,L80,D449,L987,U349,L71,U632,L887,D231,R655,D208,R698,D639,R804,U616,R532,U846,R363,D141,R659,U470,L798,U144,L675,U483,L944,U380,L329,U72,L894,D130,R53,U109,R610,U770,R778,U493,R972,D340,L866,U980,L305,D812,R130,D954,R253,D33,L912,U950,L438,D680,R891,U725,R171,D587,R549,D367,L4,U313,R522,D128,L711,D405,L769,D496,L527,U373,R725,D261,L268,D939,L902,D58,L858,D190,L442"
-
-dir1 = p1.split(',')
-dir2 = p2.split(',')
-
-seg1 = [[0,0]]
-seg2 = [[0,0]]
-
-x = 0
-y = 0
-
-dist1 = [0]
-dist2 = [0]
-
-def signal_delay(crossing, path):
-    x = 0
-    y = 0
-    tdist = 0
-    
-    for d in path:
-
-        dy = 0
-        dx = 0
-        dist = int(d[1:])
-
-        #print(d)
-        if d[0] == 'R':
-            dx = dist
-        elif d[0] == 'D':
-            dy = -dist
-        elif d[0] == 'L':
-            dx = -dist
-        elif d[0] == 'U':
-            dy = dist
-
-        #print("delta",dx,dy)
-        for n in range(abs(dy)):
-            if dy < 0:
-                y = y - 1
-            else:
-                y = y + 1
-
-            tdist = tdist + 1
-            #print(x,y,crossing)
-            if [x,y] == crossing:
-                #print("total distance",tdist,crossing)
-                return(tdist)
-
-        for n in range(abs(dx)):
-            if dx < 0:
-                x = x - 1
-            else:
-                x = x + 1
-
-            tdist = tdist + 1
-            #print(x,y,crossing)
-            if [x,y] == crossing:
-                #print("total distance",tdist,crossing)
-                return(tdist)
-
-    #curr = [x,y]
-    #dest = [x+dx,y+dy]
-    #seg1.append(dest)
-    #plt.plot((x,x+dx),(y,y+dy), 'r-')
-    
-    x = x+dx
-    y = y+dy
-
-for d in dir1:
-    dx = 0
-    dy = 0
-    dist = int(d[1:])
-    #print(dist)
-    dist1.append(dist1[-1]+dist)
-    if d[0] == 'R':
-        dx = dist
-    elif d[0] == 'D':
-        dy = -dist
-    elif d[0] == 'L':
-        dx = -dist
-    elif d[0] == 'U':
-        dy = dist
-    curr = [x,y]
-    dest = [x+dx,y+dy]
-    seg1.append(dest)
-    plt.plot((x,x+dx),(y,y+dy), 'r-')
-    
-    x = x+dx
-    y = y+dy
+        solution.main()
 
 
-x = 0
-y = 0
-
-for d in dir2:
-    dx = 0
-    dy = 0
-    dist = int(d[1:])
-    dist2.append(dist2[-1]+dist)
-    if d[0] == 'R':
-        dx = dist
-    elif d[0] == 'D':
-        dy = -dist
-    elif d[0] == 'L':
-        dx = -dist
-    elif d[0] == 'U':
-        dy = dist
-    curr = [x,y]
-    dest = [x+dx,y+dy]
-    seg2.append(dest)
-    plt.plot((x,x+dx),(y,y+dy), 'g-')
-    
-    x = x+dx
-    y = y+dy
-
-
-plt.plot(0,0, 'bo')
-
-manhat = []
-
-#print(dist1)
-#print(dist2)
-
-crossings = []
-
-for s1 in range(0,len(seg1)-1):
-    L1 = line(seg1[s1],seg1[s1+1])
-    for s2 in range(0,len(seg2)-1):
-        L2 = line(seg2[s2],seg2[s2+1])
-        inter = intersect(seg1[s1],seg1[s1+1],seg2[s2],seg2[s2+1])
-        if inter:
-            R = intersection(L1,L2)
-            if R:
-                man = abs(R[0])+abs(R[1])
-                if man > 0:
-                    manhat.append(man)
-                    plt.plot(R[0],R[1], 'ko')
-                    #print(seg1[s1],seg1[s1+1],seg2[s2],seg2[s2+1],R,R[0]+R[1],dist1[s1],dist2[s2])
-                    crossings.append([int(R[0]),int(R[1])])
-
-
-#print("calc signal delay")
-shortpath = []
-for c in crossings:
-    #print("crossing",c)
-    #print("path1")
-    l1 = signal_delay(c,dir1)
-    #print("path2")
-    l2 = signal_delay(c,dir2)
-    #print(c,"total steps",l1+l2)
-    shortpath.append(l1+l2)
-
-print("min dist",min(manhat))
-print("fewest steps",min(shortpath))
-#plt.show()
-
-
+if __name__ == "__main__":
+    main()
