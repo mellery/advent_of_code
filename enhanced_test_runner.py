@@ -483,7 +483,6 @@ class EnhancedTestRunner:
     
     def _load_module(self, file_path: Path):
         """Load a Python module from file path."""
-        original_cwd = os.getcwd()
         try:
             # Set matplotlib to non-interactive backend to prevent GUI issues in threads
             try:
@@ -493,18 +492,16 @@ class EnhancedTestRunner:
                 # matplotlib not available, ignore
                 pass
             
-            # Change to the solution directory before loading to handle relative file paths
-            solution_dir = str(file_path.parent)
-            root_dir = str(file_path.parent.parent)
-            
-            os.chdir(solution_dir)
+            # Add solution directory and root to sys.path for imports
+            solution_dir = str(file_path.parent.absolute())
+            root_dir = str(file_path.parent.parent.absolute())
             
             if solution_dir not in sys.path:
                 sys.path.insert(0, solution_dir)
             if root_dir not in sys.path:
                 sys.path.insert(0, root_dir)
             
-            spec = importlib.util.spec_from_file_location("solution", file_path.name)
+            spec = importlib.util.spec_from_file_location("solution", str(file_path.absolute()))
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
@@ -512,10 +509,6 @@ class EnhancedTestRunner:
                 
         except Exception as e:
             print(f"Error loading {file_path}: {e}")
-        
-        finally:
-            # Always restore original working directory
-            os.chdir(original_cwd)
         
         return None
     
