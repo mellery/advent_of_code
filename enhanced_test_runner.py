@@ -207,16 +207,16 @@ class SolutionAnalyzer:
             if 'def validate(' in content or 'validate_solution' in content:
                 solution_type.has_validation = True
             
-            # Check for legacy patterns
+            # Check for legacy patterns - but now we'll reject these
             if ('def part1(' in content or 'def part2(' in content) and not solution_type.is_enhanced:
                 solution_type.is_legacy = True
-                solution_type.architecture_version = "legacy"
+                solution_type.architecture_version = "legacy_deprecated"
             
             # Check for modern legacy (has part1/part2 but no class structure)
             if ('def part1(' in content and 'def part2(' in content and 
                 'class' not in content):
                 solution_type.is_legacy = True
-                solution_type.architecture_version = "modern_legacy"
+                solution_type.architecture_version = "modern_legacy_deprecated"
                 
         except Exception as e:
             solution_type.architecture_version = f"error: {e}"
@@ -289,8 +289,9 @@ class RegressionTracker:
 class EnhancedTestRunner:
     """Enhanced test runner with advanced features."""
     
-    def __init__(self, root_dir: str = "."):
+    def __init__(self, root_dir: str = ".", strict_mode: bool = True):
         self.root_dir = Path(root_dir)
+        self.strict_mode = strict_mode
         self.results: List[EnhancedTestResult] = []
         self.expected_answers: Dict[str, Dict[str, Dict[str, Any]]] = {}
         self.answers_file = self.root_dir / "expected_answers.json"
@@ -460,11 +461,31 @@ class EnhancedTestRunner:
             # Find input data
             input_data = self._get_input_data(file_path.parent, day)
             
-            # Execute based on solution type
+            # Execute based on solution type and strict mode setting
             if solution_type.is_enhanced and solution_type.has_advent_solution:
                 result = self._execute_enhanced_solution(module, input_data, result)
-            else:
+            elif solution_type.is_legacy and not self.strict_mode:
+                # Allow legacy solutions only in non-strict mode
                 result = self._execute_legacy_solution(module, input_data, result)
+            elif solution_type.is_legacy and self.strict_mode:
+                # Fail immediately for deprecated legacy solutions in strict mode
+                result.success = False
+                result.error = (f"STRICT MODE VIOLATION: Solution uses deprecated legacy format "
+                              f"({solution_type.architecture_version}). All solutions must now use "
+                              f"AdventSolution base class. Use --no-strict to allow legacy solutions "
+                              f"or migrate this solution to the enhanced format.")
+                return result
+            else:
+                # Unknown solution type - fail with helpful message
+                result.success = False
+                if self.strict_mode:
+                    result.error = (f"STRICT MODE VIOLATION: Solution does not use AdventSolution base class. "
+                                  f"All solutions must inherit from AdventSolution. "
+                                  f"Architecture detected: {solution_type.architecture_version}")
+                else:
+                    result.error = (f"UNKNOWN ARCHITECTURE: Cannot determine solution type. "
+                                  f"Architecture detected: {solution_type.architecture_version}")
+                return result
             
             # Validate results
             self._validate_results(result)
@@ -533,7 +554,7 @@ class EnhancedTestRunner:
         return None
     
     def _execute_enhanced_solution(self, module, input_data: str, result: EnhancedTestResult) -> EnhancedTestResult:
-        """Execute enhanced AdventSolution-based solution."""
+        """Execute enhanced AdventSolution-based solution with strict validation."""
         # Find the solution class
         solution_class = None
         for name in dir(module):
@@ -546,8 +567,25 @@ class EnhancedTestRunner:
         
         if not solution_class:
             result.success = False
-            result.error = "No solution class found"
+            result.error = "ARCHITECTURE VIOLATION: No solution class found inheriting from AdventSolution"
             return result
+        
+        # Strict validation: Ensure the class actually inherits from AdventSolution
+        if ADVENT_SOLUTION_AVAILABLE and AdventSolution:
+            if not issubclass(solution_class, AdventSolution):
+                result.success = False
+                result.error = (f"ARCHITECTURE VIOLATION: Solution class '{solution_class.__name__}' does not inherit "
+                              f"from AdventSolution base class. All solutions must inherit from AdventSolution.")
+                return result
+        else:
+            # If AdventSolution is not available, check for required methods
+            required_methods = ['part1', 'part2', 'run']
+            missing_methods = [method for method in required_methods if not hasattr(solution_class, method)]
+            if missing_methods:
+                result.success = False
+                result.error = (f"ARCHITECTURE VIOLATION: Solution class missing required AdventSolution methods: "
+                              f"{', '.join(missing_methods)}")
+                return result
         
         try:
             solution_instance = solution_class()
@@ -1044,19 +1082,33 @@ def main():
     parser.add_argument("--no-parallel", action="store_true", help="Disable parallel execution")
     parser.add_argument("--regression-only", action="store_true", help="Only show solutions with performance regressions")
     parser.add_argument("--enhanced-only", action="store_true", help="Only run enhanced solutions")
-    parser.add_argument("--legacy-only", action="store_true", help="Only run legacy solutions")
+    parser.add_argument("--legacy-only", action="store_true", help="Only run legacy solutions (DEPRECATED)")
+    parser.add_argument("--strict", action="store_true", default=True, help="Enforce strict AdventSolution architecture (default: True)")
+    parser.add_argument("--no-strict", action="store_true", help="Disable strict mode (allow legacy solutions)")
     
     args = parser.parse_args()
     
-    runner = EnhancedTestRunner()
+    # Determine strict mode
+    strict_mode = args.strict and not args.no_strict
+    
+    # Show deprecation warning for legacy-only flag
+    if args.legacy_only:
+        print(f"{Fore.YELLOW}⚠️  WARNING: --legacy-only flag is deprecated. Legacy solutions are no longer supported.{Style.RESET_ALL}")
+        if strict_mode:
+            print(f"{Fore.RED}❌ STRICT MODE: Cannot run legacy solutions. Use --no-strict to disable strict mode.{Style.RESET_ALL}")
+            return
+    
+    runner = EnhancedTestRunner(strict_mode=strict_mode)
     
     if args.no_parallel:
         print("Sequential execution mode not implemented in this version")
         print("Using parallel execution with 1 worker")
         args.parallel = 1
     
-    # Apply solution type filters if needed
-    # This would require modifying the discovery method
+    if strict_mode:
+        print(f"{Fore.CYAN}🔒 STRICT MODE: Only AdventSolution-based solutions will be executed{Style.RESET_ALL}")
+    else:
+        print(f"{Fore.YELLOW}⚠️  LEGACY MODE: Allowing deprecated solution formats{Style.RESET_ALL}")
     
     runner.run_parallel(
         max_workers=args.parallel,
