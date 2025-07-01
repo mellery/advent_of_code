@@ -12,6 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (
     get_lines, setup_day_args, find_input_file, validate_solution, run_solution
 )
+from utils.advent_base import AdventSolution
 from utils.ascii_art_parser import parse_ascii_letters
 from typing import Any, Dict, Tuple, List, Set
 
@@ -90,85 +91,111 @@ def visualize_dots(dots: Set[Tuple[int, int]]) -> str:
     return "\n".join(lines)
 
 
-def part1(filename: str) -> Any:
-    """
-    Count visible dots after the first fold.
+class Day13Solution(AdventSolution):
+    """Day 13: Transparent Origami"""
     
-    Args:
-        filename: Path to the input file
+    def __init__(self):
+        super().__init__(2021, 13, "Transparent Origami")
+    
+    def part1(self, filename: str) -> Any:
+        """
+        Count visible dots after the first fold.
         
-    Returns:
-        Number of visible dots after first fold
-    """
-    dots, folds = parse_input(filename)
+        Args:
+            filename: Path to the input file
+            
+        Returns:
+            Number of visible dots after first fold
+        """
+        dots, folds = parse_input(filename)
+        
+        if folds:
+            direction, fold_line = folds[0]
+            dots = fold_paper(dots, direction, fold_line)
+        
+        return len(dots)
     
-    if folds:
-        direction, fold_line = folds[0]
-        dots = fold_paper(dots, direction, fold_line)
-    
-    return len(dots)
+    def part2(self, filename: str) -> Any:
+        """
+        Apply all folds and return the resulting pattern.
+        
+        Args:
+            filename: Path to the input file
+            
+        Returns:
+            The letters formed by the dots
+        """
+        dots, folds = parse_input(filename)
+        
+        for direction, fold_line in folds:
+            dots = fold_paper(dots, direction, fold_line)
+        
+        # Generate the visual pattern
+        pattern = visualize_dots(dots)
+        
+        # Use ASCII art parser with day13 font style
+        letters = parse_ascii_letters(pattern, 'day13')
+        
+        # If that fails, try other font styles
+        if not letters or '?' in letters:
+            letters = parse_ascii_letters(pattern, 'thick')
+        
+        if not letters or '?' in letters:
+            letters = parse_ascii_letters(pattern, 'thin')
+        
+        return letters
+
+
+# Legacy functions for backward compatibility
+def part1(filename: str) -> Any:
+    """Legacy function for part 1."""
+    solution = Day13Solution()
+    return solution.part1(filename)
 
 
 def part2(filename: str) -> Any:
-    """
-    Apply all folds and return the resulting pattern.
-    
-    Args:
-        filename: Path to the input file
-        
-    Returns:
-        The letters formed by the dots
-    """
-    dots, folds = parse_input(filename)
-    
-    for direction, fold_line in folds:
-        dots = fold_paper(dots, direction, fold_line)
-    
-    # Generate the visual pattern
-    pattern = visualize_dots(dots)
-    
-    # Use ASCII art parser with day13 font style
-    letters = parse_ascii_letters(pattern, 'day13')
-    
-    # If that fails, try other font styles
-    if not letters or '?' in letters:
-        letters = parse_ascii_letters(pattern, 'thick')
-    
-    if not letters or '?' in letters:
-        letters = parse_ascii_letters(pattern, 'thin')
-    
-    return letters
+    """Legacy function for part 2."""
+    solution = Day13Solution()
+    return solution.part2(filename)
 
 
 def main():
     """Main function to run the solution."""
-    day = '13'
-    args = setup_day_args(day)
+    solution = Day13Solution()
     
-    # Determine input file
-    if args.use_test:
-        input_file = args.test
-    else:
-        input_file = find_input_file(day) or args.input
-    
-    if not os.path.exists(input_file):
-        print(f"Error: Input file '{input_file}' not found")
-        return
-    
-    print(f"Advent of Code 2021 - Day {day}")
-    print(f"Using input file: {input_file}")
-    print("-" * 40)
-    
-    # Run validation if test file exists
-    test_file = args.test
-    if os.path.exists(test_file) and not args.use_test:
-        print("Running validation tests...")
-        validate_solution(part1, part2, test_file, 
-                        expected_part1=17, expected_part2=None)
+    # Check if we're being called by the legacy test runner
+    if len(sys.argv) > 1 and '--legacy' in sys.argv:
+        # Legacy mode - use the old approach
+        day = '13'
+        args = setup_day_args(day)
+        
+        # Determine input file
+        if args.use_test:
+            input_file = args.test
+        else:
+            input_file = find_input_file(day) or args.input
+        
+        if not os.path.exists(input_file):
+            print(f"Error: Input file '{input_file}' not found")
+            return
+        
+        print(f"Advent of Code 2021 - Day {day}")
+        print(f"Using input file: {input_file}")
         print("-" * 40)
-    
-    # Run the actual solution
-    run_solution(part1, part2, input_file, args)
+        
+        # Run validation if test file exists
+        test_file = args.test
+        if os.path.exists(test_file) and not args.use_test:
+            print("Running validation tests...")
+            validate_solution(part1, part2, test_file, 
+                            expected_part1=17, expected_part2=None)
+            print("-" * 40)
+        
+        # Run the actual solution
+        run_solution(part1, part2, input_file, args)
+    else:
+        # Enhanced mode - use AdventSolution
+        solution.run()
 
 
 if __name__ == "__main__":

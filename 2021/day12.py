@@ -12,6 +12,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (
     get_lines, setup_day_args, find_input_file, validate_solution, run_solution
 )
+from utils.advent_base import AdventSolution
 from typing import Any, Dict, List, Set
 from collections import defaultdict
 
@@ -79,69 +80,95 @@ def count_paths_part2(graph: Dict[str, List[str]], current: str, visited: Dict[s
     return total_paths
 
 
-def part1(filename: str) -> Any:
-    """
-    Count paths from start to end, visiting small caves at most once.
+class Day12Solution(AdventSolution):
+    """Day 12: Passage Pathing"""
     
-    Args:
-        filename: Path to the input file
+    def __init__(self):
+        super().__init__(2021, 12, "Passage Pathing")
+    
+    def part1(self, filename: str) -> Any:
+        """
+        Count paths from start to end, visiting small caves at most once.
         
-    Returns:
-        Number of valid paths
-    """
-    graph = build_graph(filename)
-    visited = set()
-    if 'start' in graph:
-        visited.add('start')
+        Args:
+            filename: Path to the input file
+            
+        Returns:
+            Number of valid paths
+        """
+        graph = build_graph(filename)
+        visited = set()
+        if 'start' in graph:
+            visited.add('start')
+        
+        return count_paths_part1(graph, 'start', visited)
     
-    return count_paths_part1(graph, 'start', visited)
+    def part2(self, filename: str) -> Any:
+        """
+        Count paths allowing one small cave to be visited at most twice.
+        
+        Args:
+            filename: Path to the input file
+            
+        Returns:
+            Number of valid paths with relaxed rules
+        """
+        graph = build_graph(filename)
+        visited = {'start': 1}
+        
+        return count_paths_part2(graph, 'start', visited, False)
+
+
+# Legacy functions for backward compatibility
+def part1(filename: str) -> Any:
+    """Legacy function for part 1."""
+    solution = Day12Solution()
+    return solution.part1(filename)
 
 
 def part2(filename: str) -> Any:
-    """
-    Count paths allowing one small cave to be visited at most twice.
-    
-    Args:
-        filename: Path to the input file
-        
-    Returns:
-        Number of valid paths with relaxed rules
-    """
-    graph = build_graph(filename)
-    visited = {'start': 1}
-    
-    return count_paths_part2(graph, 'start', visited, False)
+    """Legacy function for part 2."""
+    solution = Day12Solution()
+    return solution.part2(filename)
 
 
 def main():
     """Main function to run the solution."""
-    day = '12'
-    args = setup_day_args(day)
+    solution = Day12Solution()
     
-    # Determine input file
-    if args.use_test:
-        input_file = args.test
-    else:
-        input_file = find_input_file(day) or args.input
-    
-    if not os.path.exists(input_file):
-        print(f"Error: Input file '{input_file}' not found")
-        return
-    
-    print(f"Advent of Code 2021 - Day {day}")
-    print(f"Using input file: {input_file}")
-    print("-" * 40)
-    
-    # Run validation if test file exists
-    test_file = args.test
-    if os.path.exists(test_file) and not args.use_test:
-        print("Running validation tests...")
-        validate_solution(part1, part2, test_file, 
-                        expected_part1=10, expected_part2=36)
+    # Check if we're being called by the legacy test runner
+    if len(sys.argv) > 1 and '--legacy' in sys.argv:
+        # Legacy mode - use the old approach
+        day = '12'
+        args = setup_day_args(day)
+        
+        # Determine input file
+        if args.use_test:
+            input_file = args.test
+        else:
+            input_file = find_input_file(day) or args.input
+        
+        if not os.path.exists(input_file):
+            print(f"Error: Input file '{input_file}' not found")
+            return
+        
+        print(f"Advent of Code 2021 - Day {day}")
+        print(f"Using input file: {input_file}")
         print("-" * 40)
-    
-    # Run the actual solution
-    run_solution(part1, part2, input_file, args)
+        
+        # Run validation if test file exists
+        test_file = args.test
+        if os.path.exists(test_file) and not args.use_test:
+            print("Running validation tests...")
+            validate_solution(part1, part2, test_file, 
+                            expected_part1=10, expected_part2=36)
+            print("-" * 40)
+        
+        # Run the actual solution
+        run_solution(part1, part2, input_file, args)
+    else:
+        # Enhanced mode - use AdventSolution
+        solution.run()
 
 
 if __name__ == "__main__":

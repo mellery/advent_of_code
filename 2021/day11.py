@@ -12,7 +12,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import (
     get_grid, setup_day_args, find_input_file, validate_solution, run_solution
 )
-from typing import Any, Dict, Tuple, List
+from utils.advent_base import AdventSolution
+from typing import Any, Dict, Tuple, List, Set
 
 
 def simulate_octopus_step(grid: Dict[Tuple[int, int], int], rows: int, cols: int) -> int:
@@ -59,91 +60,117 @@ def simulate_octopus_step(grid: Dict[Tuple[int, int], int], rows: int, cols: int
     return flash_count
 
 
-def part1(filename: str) -> Any:
-    """
-    Count total flashes after 100 steps.
+class Day11Solution(AdventSolution):
+    """Day 11: Dumbo Octopus"""
     
-    Args:
-        filename: Path to the input file
+    def __init__(self):
+        super().__init__(2021, 11, "Dumbo Octopus")
+    
+    def part1(self, filename: str) -> Any:
+        """
+        Count total flashes after 100 steps.
         
-    Returns:
-        Total number of flashes after 100 steps
-    """
-    grid_data = get_grid(filename, lambda x: int(x))
-    grid = {}
-    rows = len(grid_data)
-    cols = len(grid_data[0])
+        Args:
+            filename: Path to the input file
+            
+        Returns:
+            Total number of flashes after 100 steps
+        """
+        grid_data = get_grid(filename, lambda x: int(x))
+        grid = {}
+        rows = len(grid_data)
+        cols = len(grid_data[0])
+        
+        # Convert to coordinate-based grid
+        for x in range(rows):
+            for y in range(cols):
+                grid[(x, y)] = grid_data[x][y]
+        
+        total_flashes = 0
+        for step in range(100):
+            total_flashes += simulate_octopus_step(grid, rows, cols)
+        
+        return total_flashes
     
-    # Convert to coordinate-based grid
-    for x in range(rows):
-        for y in range(cols):
-            grid[(x, y)] = grid_data[x][y]
-    
-    total_flashes = 0
-    for step in range(100):
-        total_flashes += simulate_octopus_step(grid, rows, cols)
-    
-    return total_flashes
+    def part2(self, filename: str) -> Any:
+        """
+        Find the step when all octopuses flash simultaneously.
+        
+        Args:
+            filename: Path to the input file
+            
+        Returns:
+            The step number when all octopuses flash together
+        """
+        grid_data = get_grid(filename, lambda x: int(x))
+        grid = {}
+        rows = len(grid_data)
+        cols = len(grid_data[0])
+        total_octopuses = rows * cols
+        
+        # Convert to coordinate-based grid
+        for x in range(rows):
+            for y in range(cols):
+                grid[(x, y)] = grid_data[x][y]
+        
+        step = 0
+        while True:
+            step += 1
+            flashes = simulate_octopus_step(grid, rows, cols)
+            if flashes == total_octopuses:
+                return step
+
+
+# Legacy functions for backward compatibility
+def part1(filename: str) -> Any:
+    """Legacy function for part 1."""
+    solution = Day11Solution()
+    return solution.part1(filename)
 
 
 def part2(filename: str) -> Any:
-    """
-    Find the step when all octopuses flash simultaneously.
-    
-    Args:
-        filename: Path to the input file
-        
-    Returns:
-        The step number when all octopuses flash together
-    """
-    grid_data = get_grid(filename, lambda x: int(x))
-    grid = {}
-    rows = len(grid_data)
-    cols = len(grid_data[0])
-    total_octopuses = rows * cols
-    
-    # Convert to coordinate-based grid
-    for x in range(rows):
-        for y in range(cols):
-            grid[(x, y)] = grid_data[x][y]
-    
-    step = 0
-    while True:
-        step += 1
-        flashes = simulate_octopus_step(grid, rows, cols)
-        if flashes == total_octopuses:
-            return step
+    """Legacy function for part 2."""
+    solution = Day11Solution()
+    return solution.part2(filename)
 
 
 def main():
     """Main function to run the solution."""
-    day = '11'
-    args = setup_day_args(day)
+    solution = Day11Solution()
     
-    # Determine input file
-    if args.use_test:
-        input_file = args.test
-    else:
-        input_file = find_input_file(day) or args.input
-    
-    if not os.path.exists(input_file):
-        print(f"Error: Input file '{input_file}' not found")
-        return
-    
-    print(f"Advent of Code 2021 - Day {day}")
-    print(f"Using input file: {input_file}")
-    print("-" * 40)
-    
-    # Run validation if test file exists
-    test_file = args.test
-    if os.path.exists(test_file) and not args.use_test:
-        print("Running validation tests...")
-        validate_solution(part1, part2, test_file, 
-                        expected_part1=1656, expected_part2=195)
+    # Check if we're being called by the legacy test runner
+    if len(sys.argv) > 1 and '--legacy' in sys.argv:
+        # Legacy mode - use the old approach
+        day = '11'
+        args = setup_day_args(day)
+        
+        # Determine input file
+        if args.use_test:
+            input_file = args.test
+        else:
+            input_file = find_input_file(day) or args.input
+        
+        if not os.path.exists(input_file):
+            print(f"Error: Input file '{input_file}' not found")
+            return
+        
+        print(f"Advent of Code 2021 - Day {day}")
+        print(f"Using input file: {input_file}")
         print("-" * 40)
-    
-    # Run the actual solution
-    run_solution(part1, part2, input_file, args)
+        
+        # Run validation if test file exists
+        test_file = args.test
+        if os.path.exists(test_file) and not args.use_test:
+            print("Running validation tests...")
+            validate_solution(part1, part2, test_file, 
+                            expected_part1=1656, expected_part2=195)
+            print("-" * 40)
+        
+        # Run the actual solution
+        run_solution(part1, part2, input_file, args)
+    else:
+        # Enhanced mode - use AdventSolution
+        solution.run()
 
 
 if __name__ == "__main__":
