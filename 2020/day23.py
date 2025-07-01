@@ -119,49 +119,10 @@ class Day23OptimizedSolution(AdventSolution):
         return cup1 * cup2
 
 
-# Legacy compatibility functions for test runner
-def part1(input_data) -> str:
-    """Legacy function for part 1."""
-    if isinstance(input_data, str) and not ('\n' in input_data or any(c.isdigit() for c in input_data)):
-        # This is a filename
-        try:
-            with open(input_data, 'r') as f:
-                content = f.read()
-        except FileNotFoundError:
-            return "Error"
-    else:
-        content = input_data
-    
-    solution = Day23OptimizedSolution()
-    return solution.part1(content)
-
-
-def part2(input_data) -> int:
-    """Legacy function for part 2."""
-    if isinstance(input_data, str) and not ('\n' in input_data or any(c.isdigit() for c in input_data)):
-        # This is a filename
-        try:
-            with open(input_data, 'r') as f:
-                content = f.read()
-        except FileNotFoundError:
-            return -1
-    else:
-        content = input_data
-    
-    solution = Day23OptimizedSolution()
-    return solution.part2(content)
-
-
 def main():
-    """Main function with dual compatibility."""
-    if len(sys.argv) > 1 or '--test' in sys.argv or '--time' in sys.argv:
-        # New AdventSolution mode
-        solution = Day23OptimizedSolution()
-        solution.main()
-    else:
-        # Legacy mode for compatibility
-        print(part1("day23_input.txt"))
-        print(part2("day23_input.txt"))
+    """Main execution function."""
+    solution = Day23OptimizedSolution()
+    solution.main()
 
 
 if __name__ == "__main__":

@@ -378,33 +378,8 @@ aaaabbb"""
         return True
 
 
-# Legacy compatibility functions for test runner
-def part1(input_data: str = None) -> int:
-    """Part 1 function compatible with test runner."""
-    if input_data is None:
-        # Load from the correct path
-        file_path = Path(__file__).parent / "day19_input.txt"
-        with open(file_path, 'r') as f:
-            input_data = f.read()
-    
-    solution = Day19Solution()
-    return solution.part1(input_data)
-
-
-def part2(input_data: str = None) -> int:
-    """Part 2 function compatible with test runner."""
-    if input_data is None:
-        # Load from the correct path
-        file_path = Path(__file__).parent / "day19_input.txt"
-        with open(file_path, 'r') as f:
-            input_data = f.read()
-    
-    solution = Day19Solution()
-    return solution.part2(input_data)
-
-
 def main():
-    """Main function to run the solution."""
+    """Main execution function."""
     solution = Day19Solution()
     solution.main()
 

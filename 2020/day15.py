@@ -81,55 +81,10 @@ class Day15OptimizedSolution(AdventSolution):
         return optimized_van_eck_sequence(starting_numbers, 30000000)
 
 
-# Legacy compatibility functions for test runner
-def part1(input_data) -> int:
-    """Legacy function for part 1."""
-    # Handle both filename and content
-    if isinstance(input_data, str):
-        if '\n' in input_data or ',' in input_data:
-            content = input_data.strip()
-        else:
-            try:
-                with open(input_data, 'r') as f:
-                    content = f.read().strip()
-            except FileNotFoundError:
-                content = "1,20,11,6,12,0"
-    else:
-        content = "1,20,11,6,12,0"
-    
-    solution = Day15OptimizedSolution()
-    return solution.part1(content)
-
-
-def part2(input_data) -> int:
-    """Legacy function for part 2."""
-    # Handle both filename and content
-    if isinstance(input_data, str):
-        if '\n' in input_data or ',' in input_data:
-            content = input_data.strip()
-        else:
-            try:
-                with open(input_data, 'r') as f:
-                    content = f.read().strip()
-            except FileNotFoundError:
-                content = "1,20,11,6,12,0"
-    else:
-        content = "1,20,11,6,12,0"
-    
-    solution = Day15OptimizedSolution()
-    return solution.part2(content)
-
-
 def main():
-    """Main function with dual compatibility."""
-    if len(sys.argv) > 1 or '--test' in sys.argv or '--time' in sys.argv:
-        # New AdventSolution mode
-        solution = Day15OptimizedSolution()
-        solution.main()
-    else:
-        # Legacy mode for compatibility
-        print(part1("day15_input.txt"))
-        print(part2("day15_input.txt"))
+    """Main execution function."""
+    solution = Day15OptimizedSolution()
+    solution.main()
 
 
 if __name__ == "__main__":

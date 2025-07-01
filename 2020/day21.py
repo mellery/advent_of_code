@@ -276,27 +276,8 @@ sqjhc mxmxvkd sbzzf (contains fish)"""
         return True
 
 
-# Legacy compatibility functions for test runner
-def part1(input_data: str = None) -> int:
-    """Part 1 function compatible with test runner."""
-    solution = Day21Solution()
-    if input_data is None:
-        # Use actual input file
-        input_data = solution._load_input()
-    return solution.part1(input_data)
-
-
-def part2(input_data: str = None) -> str:
-    """Part 2 function compatible with test runner."""
-    solution = Day21Solution()
-    if input_data is None:
-        # Use actual input file
-        input_data = solution._load_input()
-    return solution.part2(input_data)
-
-
 def main():
-    """Main function to run the solution."""
+    """Main execution function."""
     solution = Day21Solution()
     solution.main()
 
