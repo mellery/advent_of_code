@@ -404,43 +404,11 @@ class Day12Solution(AdventSolution):
                 print(f"  {axis.upper()}-axis: {period:,} steps")
 
 
-# Legacy functions for test runner compatibility
-def part1(input_data: str = None) -> int:
-    """Legacy part1 function for test runner compatibility."""
-    if input_data is None:
-        # Auto-load input file or use embedded test data
-        try:
-            with open('/home/mike/src/advent_of_code/2019/day12_input.txt', 'r') as f:
-                input_data = f.read()
-        except FileNotFoundError:
-            # Use the coordinates from the original solution
-            input_data = """<x=3, y=2, z=-6>
-<x=-13, y=18, z=10>
-<x=-8, y=-1, z=13>
-<x=5, y=10, z=4>"""
-    
+def main():
+    """Main execution function."""
     solution = Day12Solution()
-    return solution.part1(input_data)
-
-
-def part2(input_data: str = None) -> int:
-    """Legacy part2 function for test runner compatibility."""
-    if input_data is None:
-        # Auto-load input file or use embedded test data
-        try:
-            with open('/home/mike/src/advent_of_code/2019/day12_input.txt', 'r') as f:
-                input_data = f.read()
-        except FileNotFoundError:
-            # Use the coordinates from the original solution
-            input_data = """<x=3, y=2, z=-6>
-<x=-13, y=18, z=10>
-<x=-8, y=-1, z=13>
-<x=5, y=10, z=4>"""
-    
-    solution = Day12Solution()
-    return solution.part2(input_data)
+    solution.main()
 
 
 if __name__ == "__main__":
-    solution = Day12Solution()
-    solution.main()
+    main()

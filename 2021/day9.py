@@ -96,17 +96,19 @@ class Day9Solution(AdventSolution):
     def __init__(self):
         super().__init__(2021, 9, "Smoke Basin")
     
-    def part1(self, filename: str) -> Any:
+    def part1(self, input_data: str) -> Any:
         """
         Calculate sum of risk levels for all low points.
         
         Args:
-            filename: Path to the input file
+            input_data: Raw input data containing the height map
             
         Returns:
             Sum of risk levels (height + 1) for all low points
         """
-        grid = get_grid(filename)
+        lines = input_data.strip().split('\n')
+        grid = [[int(char) for char in line] for line in lines]
+        
         low_points = get_low_points(grid)
         
         risk_sum = 0
@@ -115,17 +117,19 @@ class Day9Solution(AdventSolution):
         
         return risk_sum
     
-    def part2(self, filename: str) -> Any:
+    def part2(self, input_data: str) -> Any:
         """
         Find product of three largest basin sizes.
         
         Args:
-            filename: Path to the input file
+            input_data: Raw input data containing the height map
             
         Returns:
             Product of the three largest basin sizes
         """
-        grid = get_grid(filename)
+        lines = input_data.strip().split('\n')
+        grid = [[int(char) for char in line] for line in lines]
+        
         low_points = get_low_points(grid)
         
         basin_sizes = []
@@ -138,56 +142,10 @@ class Day9Solution(AdventSolution):
         return basin_sizes[0] * basin_sizes[1] * basin_sizes[2]
 
 
-# Legacy functions for backward compatibility
-def part1(filename: str) -> Any:
-    """Legacy function for part 1."""
-    solution = Day9Solution()
-    return solution.part1(filename)
-
-
-def part2(filename: str) -> Any:
-    """Legacy function for part 2."""
-    solution = Day9Solution()
-    return solution.part2(filename)
-
-
 def main():
-    """Main function to run the solution."""
+    """Main execution function."""
     solution = Day9Solution()
-    
-    # Check if we're being called by the legacy test runner
-    if len(sys.argv) > 1 and '--legacy' in sys.argv:
-        # Legacy mode - use the old approach
-        day = '9'
-        args = setup_day_args(day)
-        
-        # Determine input file
-        if args.use_test:
-            input_file = args.test
-        else:
-            input_file = find_input_file(day) or args.input
-        
-        if not os.path.exists(input_file):
-            print(f"Error: Input file '{input_file}' not found")
-            return
-        
-        print(f"Advent of Code 2021 - Day {day}")
-        print(f"Using input file: {input_file}")
-        print("-" * 40)
-        
-        # Run validation if test file exists
-        test_file = args.test
-        if os.path.exists(test_file) and not args.use_test:
-            print("Running validation tests...")
-            validate_solution(part1, part2, test_file, 
-                            expected_part1=15, expected_part2=1134)
-            print("-" * 40)
-        
-        # Run the actual solution
-        run_solution(part1, part2, input_file, args)
-    else:
-        # Enhanced mode - use AdventSolution
-        solution.run()
+    solution.main()
 
 
 if __name__ == "__main__":

@@ -442,35 +442,11 @@ class Day18Solution(AdventSolution):
         print(f"  Part 2: {part2_result}")
 
 
-# Legacy functions for test runner compatibility
-def part1(input_data: str = None) -> int:
-    """Legacy part1 function for test runner compatibility."""
-    if input_data is None:
-        # Auto-load input file
-        try:
-            with open('/home/mike/src/advent_of_code/2020/day18_input.txt', 'r') as f:
-                input_data = f.read()
-        except FileNotFoundError:
-            return -1
-    
+def main():
+    """Main execution function."""
     solution = Day18Solution()
-    return solution.part1(input_data)
-
-
-def part2(input_data: str = None) -> int:
-    """Legacy part2 function for test runner compatibility."""
-    if input_data is None:
-        # Auto-load input file
-        try:
-            with open('/home/mike/src/advent_of_code/2020/day18_input.txt', 'r') as f:
-                input_data = f.read()
-        except FileNotFoundError:
-            return -1
-    
-    solution = Day18Solution()
-    return solution.part2(input_data)
+    solution.main()
 
 
 if __name__ == "__main__":
-    solution = Day18Solution()
-    solution.main()
+    main()

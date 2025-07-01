@@ -445,31 +445,11 @@ class Day20Solution(AdventSolution):
             print(f"  Part 2: {path2}")
 
 
-# Legacy functions for test runner compatibility
-def part1(filename: str) -> int:
-    """Legacy part1 function for test runner compatibility."""
-    try:
-        with open(filename, 'r') as f:
-            input_data = f.read()
-    except FileNotFoundError:
-        return -1
-    
+def main():
+    """Main execution function."""
     solution = Day20Solution()
-    return solution.part1(input_data)
-
-
-def part2(filename: str) -> int:
-    """Legacy part2 function for test runner compatibility."""
-    try:
-        with open(filename, 'r') as f:
-            input_data = f.read()
-    except FileNotFoundError:
-        return -1
-    
-    solution = Day20Solution()
-    return solution.part2(input_data)
+    solution.main()
 
 
 if __name__ == "__main__":
-    solution = Day20Solution()
-    solution.main()
+    main()

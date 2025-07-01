@@ -477,47 +477,11 @@ class Day14Solution(AdventSolution):
         print(f"  Part 2: {max_fuel:,} FUEL")
 
 
-# Legacy functions for test runner compatibility
-def part1(input_data: str = None) -> int:
-    """Legacy part1 function for test runner compatibility."""
-    if input_data is None:
-        # Auto-load input file
-        try:
-            with open('/home/mike/src/advent_of_code/2019/day14_input.txt', 'r') as f:
-                input_data = f.read()
-        except FileNotFoundError:
-            # Fallback to a simple test case
-            input_data = """10 ORE => 10 A
-1 ORE => 1 B
-7 A, 1 B => 1 C
-7 A, 1 C => 1 D
-7 A, 1 D => 1 E
-7 A, 1 E => 1 FUEL"""
-    
+def main():
+    """Main execution function."""
     solution = Day14Solution()
-    return solution.part1(input_data)
-
-
-def part2(input_data: str = None) -> int:
-    """Legacy part2 function for test runner compatibility."""
-    if input_data is None:
-        # Auto-load input file
-        try:
-            with open('/home/mike/src/advent_of_code/2019/day14_input.txt', 'r') as f:
-                input_data = f.read()
-        except FileNotFoundError:
-            # Fallback to a simple test case
-            input_data = """10 ORE => 10 A
-1 ORE => 1 B
-7 A, 1 B => 1 C
-7 A, 1 C => 1 D
-7 A, 1 D => 1 E
-7 A, 1 E => 1 FUEL"""
-    
-    solution = Day14Solution()
-    return solution.part2(input_data)
+    solution.main()
 
 
 if __name__ == "__main__":
-    solution = Day14Solution()
-    solution.main()
+    main()
