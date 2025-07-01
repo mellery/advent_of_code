@@ -1,89 +1,138 @@
-def load_pairs(filename):
+#!/usr/bin/env python3
+"""
+Advent of Code 2021 - Day 14: Extended Polymerization
 
-    with open(filename) as f:
-        lines = f.readlines()
-        i = 0
-        poly = {}
-        for l in lines:
-            if i == 0:
-                template = l.strip()
-            else:
-                if "->" in l:
-                    temp = l.split("->")
-                    poly[temp[0].strip()] = temp[1].strip()
-            i += 1
+Simulating polymer growth using pair insertion rules.
+"""
 
-    return template, poly
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-def insert(template, poly):
-    result = ""
-    for i in range(0,len(template)-1):
-        result += template[i]
-        result += poly[template[i:i+2]]
-        #result += template[i+1]
-        #print(template[i:i+2])
-    result += template[-1]
-    return result
+from utils import (
+    get_lines, setup_day_args, find_input_file, validate_solution, run_solution
+)
+from typing import Any, Dict, Tuple
+from collections import defaultdict
 
-def updatepairs(pairs,poly):
-    newpairs = {}
-    for p in pairs:
-        #print(p,poly[p],p[0])
-        n = p[0]+poly[p]
-        if n in newpairs:
-            newpairs[n] += pairs[p]
-        else:
-            newpairs[n] = pairs[p]
-        n = poly[p]+p[1]
-        if n in newpairs:
-            newpairs[n] += pairs[p]
-        else:
-            newpairs[n] = pairs[p]
-    return newpairs
 
-def builddict(template):
-    pairs = {}
-    for i in range(0,len(template)-1):
-        p =  template[i:i+2]
-        if p in pairs:
-            pairs[p] += 1
-        else:
-            pairs[p] = 1
-    return pairs
-
-def part1(filename):
+def parse_input(filename: str) -> Tuple[str, Dict[str, str]]:
+    """Parse the polymer template and insertion rules."""
+    lines = get_lines(filename)
+    template = lines[0].strip()
     
-    template, poly = load_pairs(filename)
-    pairs = builddict(template)
-    #print(pairs)
+    rules = {}
+    for line in lines[2:]:  # Skip empty line at index 1
+        if '->' in line:
+            pair, insert = line.strip().split(' -> ')
+            rules[pair] = insert
+    
+    return template, rules
 
-    steps = 40
-    for i in range(0,steps):
-        pairs = updatepairs(pairs,poly)
+
+def solve_polymerization(template: str, rules: Dict[str, str], steps: int) -> int:
+    """Solve polymerization efficiently using pair counting."""
+    # Count initial pairs
+    pair_counts = defaultdict(int)
+    for i in range(len(template) - 1):
+        pair = template[i:i+2]
+        pair_counts[pair] += 1
+    
+    # Apply insertion rules for specified steps
+    for step in range(steps):
+        new_pair_counts = defaultdict(int)
         
-        letters = []
-        counts = {}
-        for k,v in pairs.items():
-            if k[0] not in letters:
-                letters.append(k[0])
-            if k[1] not in letters:
-                letters.append(k[1])
+        for pair, count in pair_counts.items():
+            if pair in rules:
+                insert_char = rules[pair]
+                # One pair AB with insertion C becomes AC and CB
+                left_pair = pair[0] + insert_char
+                right_pair = insert_char + pair[1]
+                
+                new_pair_counts[left_pair] += count
+                new_pair_counts[right_pair] += count
+            else:
+                # No rule for this pair, keep as is
+                new_pair_counts[pair] += count
+        
+        pair_counts = new_pair_counts
+    
+    # Count character frequencies
+    char_counts = defaultdict(int)
+    
+    # Count first character of each pair
+    for pair, count in pair_counts.items():
+        char_counts[pair[0]] += count
+    
+    # Add the last character of the original template
+    # (it never changes as it's always at the end)
+    char_counts[template[-1]] += 1
+    
+    # Calculate difference between most and least common
+    max_count = max(char_counts.values())
+    min_count = min(char_counts.values())
+    
+    return max_count - min_count
 
-            for x in letters:
-                if x in k[0]:
-                    if x in counts:
-                        counts[x] += v
-                    else:
-                        counts[x] = v
-        counts[template[-1]] += 1
 
-        max_key = max(counts, key=counts.get)
-        min_key = min(counts, key=counts.get)
+def part1(filename: str) -> Any:
+    """
+    Apply polymer insertion rules for 10 steps.
+    
+    Args:
+        filename: Path to the input file
+        
+    Returns:
+        Difference between most and least common elements after 10 steps
+    """
+    template, rules = parse_input(filename)
+    return solve_polymerization(template, rules, 10)
 
-        print(counts[max_key]-counts[min_key])
 
-        #print(i+1,counts)
-  
+def part2(filename: str) -> Any:
+    """
+    Apply polymer insertion rules for 40 steps.
+    
+    Args:
+        filename: Path to the input file
+        
+    Returns:
+        Difference between most and least common elements after 40 steps
+    """
+    template, rules = parse_input(filename)
+    return solve_polymerization(template, rules, 40)
 
-#part1('day14_ex1.txt')
-part1('day14_input.txt')
+
+def main():
+    """Main function to run the solution."""
+    day = '14'
+    args = setup_day_args(day)
+    
+    # Determine input file
+    if args.use_test:
+        input_file = args.test
+    else:
+        input_file = find_input_file(day) or args.input
+    
+    if not os.path.exists(input_file):
+        print(f"Error: Input file '{input_file}' not found")
+        return
+    
+    print(f"Advent of Code 2021 - Day {day}")
+    print(f"Using input file: {input_file}")
+    print("-" * 40)
+    
+    # Run validation if test file exists
+    test_file = args.test
+    if os.path.exists(test_file) and not args.use_test:
+        print("Running validation tests...")
+        validate_solution(part1, part2, test_file, 
+                        expected_part1=1588, expected_part2=2188189693529)
+        print("-" * 40)
+    
+    # Run the actual solution
+    run_solution(part1, part2, input_file, args)
+
+
+if __name__ == "__main__":
+    main()

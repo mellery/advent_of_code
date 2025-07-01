@@ -1,93 +1,148 @@
-import networkx as nx
-import matplotlib.pyplot as plt
+#!/usr/bin/env python3
+"""
+Advent of Code 2021 - Day 12: Passage Pathing
 
-ans = 0
+Finding paths through a cave system with restrictions on revisiting small caves.
+"""
 
-def build_map(filename):
-    G = nx.Graph()
-    nodes = []
-    with open(filename) as f:
-        lines = f.readlines()
-        for l in lines:
-            n1 = l.split('-')[0].strip()
-            n2 = l.split('-')[1].strip()
-            G.add_node(n1)
-            G.add_node(n2)
-            G.add_edge(n1,n2)
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-    return G
+from utils import (
+    get_lines, setup_day_args, find_input_file, validate_solution, run_solution
+)
+from typing import Any, Dict, List, Set
+from collections import defaultdict
 
-def build_path(G,path):
-    global ans 
-    moves = list(G.adj[path[-1]])
-    if 'start' in moves:
-        moves.remove('start')
 
-    for m in moves:   
+def build_graph(filename: str) -> Dict[str, List[str]]:
+    """Build an adjacency list representation of the cave system."""
+    graph = defaultdict(list)
+    lines = get_lines(filename)
+    
+    for line in lines:
+        cave1, cave2 = line.strip().split('-')
+        graph[cave1].append(cave2)
+        graph[cave2].append(cave1)
+    
+    return graph
+
+
+def count_paths_part1(graph: Dict[str, List[str]], current: str, visited: Set[str]) -> int:
+    """Count paths from current to 'end' without revisiting small caves."""
+    if current == 'end':
+        return 1
+    
+    total_paths = 0
+    for neighbor in graph[current]:
+        if neighbor == 'start':
+            continue
         
-        newpath = path.copy()
-
-        if m.islower() and m in newpath: #don't revisit a small room
-            pass
-        else:
-            newpath.append(m)
-
-            if newpath[-1] == 'end':
-                ans +=1
-            else:
-                build_path(G,newpath)
-
-def check_small_ones(path):
-    small_count = 0
-    valid = True
-    for p in path:
-        if p.islower() and path.count(p) > 1:
-            small_count += 1
-    #print(small_count,path)
-    if small_count <= 2:
-        return True
-    return False
-
-
-def build_path2(G,path):
-    global ans 
-    moves = list(G.adj[path[-1]])
-    if 'start' in moves:
-        moves.remove('start')
-
-    for m in moves:   
+        # Small caves (lowercase) can only be visited once
+        if neighbor.islower() and neighbor in visited:
+            continue
         
-        newpath = path.copy()
-        if check_small_ones(newpath) == False:
-            pass
-        else:
-            newpath.append(m)
+        new_visited = visited.copy()
+        if neighbor.islower():
+            new_visited.add(neighbor)
+        
+        total_paths += count_paths_part1(graph, neighbor, new_visited)
+    
+    return total_paths
 
-            if newpath[-1] == 'end':
-                ans +=1
+
+def count_paths_part2(graph: Dict[str, List[str]], current: str, visited: Dict[str, int], used_twice: bool) -> int:
+    """Count paths allowing one small cave to be visited twice."""
+    if current == 'end':
+        return 1
+    
+    total_paths = 0
+    for neighbor in graph[current]:
+        if neighbor == 'start':
+            continue
+        
+        new_visited = visited.copy()
+        new_used_twice = used_twice
+        
+        if neighbor.islower():
+            if neighbor in visited:
+                if used_twice:  # Already used our "twice" visit
+                    continue
+                new_used_twice = True
+                new_visited[neighbor] = 2
             else:
-                build_path2(G,newpath)
-
-def part1(filename):
-    G = build_map(filename)
-    path = ['start']
-    build_path(G,path)
-    print("DONE",ans)
+                new_visited[neighbor] = 1
+        
+        total_paths += count_paths_part2(graph, neighbor, new_visited, new_used_twice)
+    
+    return total_paths
 
 
-def part2(filename):
-    G = build_map(filename)
-    path = ['start']
-    build_path2(G,path)
-    print("DONE",ans)
+def part1(filename: str) -> Any:
+    """
+    Count paths from start to end, visiting small caves at most once.
+    
+    Args:
+        filename: Path to the input file
+        
+    Returns:
+        Number of valid paths
+    """
+    graph = build_graph(filename)
+    visited = set()
+    if 'start' in graph:
+        visited.add('start')
+    
+    return count_paths_part1(graph, 'start', visited)
 
 
-#part1('day12_ex1.txt') #10
-#part1('day12_ex2.txt') #19
-#part1('day12_ex3.txt') #226
-#part1('day12_input.txt')
+def part2(filename: str) -> Any:
+    """
+    Count paths allowing one small cave to be visited at most twice.
+    
+    Args:
+        filename: Path to the input file
+        
+    Returns:
+        Number of valid paths with relaxed rules
+    """
+    graph = build_graph(filename)
+    visited = {'start': 1}
+    
+    return count_paths_part2(graph, 'start', visited, False)
 
-#part2('day12_ex1.txt') #36
-#part2('day12_ex2.txt') #103
-#part2('day12_ex3.txt') #3509
-part2('day12_input.txt')
+
+def main():
+    """Main function to run the solution."""
+    day = '12'
+    args = setup_day_args(day)
+    
+    # Determine input file
+    if args.use_test:
+        input_file = args.test
+    else:
+        input_file = find_input_file(day) or args.input
+    
+    if not os.path.exists(input_file):
+        print(f"Error: Input file '{input_file}' not found")
+        return
+    
+    print(f"Advent of Code 2021 - Day {day}")
+    print(f"Using input file: {input_file}")
+    print("-" * 40)
+    
+    # Run validation if test file exists
+    test_file = args.test
+    if os.path.exists(test_file) and not args.use_test:
+        print("Running validation tests...")
+        validate_solution(part1, part2, test_file, 
+                        expected_part1=10, expected_part2=36)
+        print("-" * 40)
+    
+    # Run the actual solution
+    run_solution(part1, part2, input_file, args)
+
+
+if __name__ == "__main__":
+    main()
