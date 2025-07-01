@@ -399,29 +399,8 @@ class Day4Solution(AdventSolution):
                       f"Groups={analysis['digit_groups']}")
 
 
-# Legacy functions for test runner compatibility
-def part1(input_data: str = None) -> int:
-    """Legacy function for test runner compatibility."""
-    if input_data is None:
-        # Use the problem's default range
-        input_data = "125730-579381"
-    
-    solution = Day4Solution()
-    return solution.part1(input_data)
-
-
-def part2(input_data: str = None) -> int:
-    """Legacy function for test runner compatibility."""
-    if input_data is None:
-        # Use the problem's default range
-        input_data = "125730-579381"
-    
-    solution = Day4Solution()
-    return solution.part2(input_data)
-
-
 def main():
-    """Main function to run the enhanced solution."""
+    """Main execution function."""
     solution = Day4Solution()
     
     # If run with analyze flag, show comprehensive analysis

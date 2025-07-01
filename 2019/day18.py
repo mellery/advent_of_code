@@ -322,35 +322,10 @@ class Day18OptimizedSolution(AdventSolution):
         return maze.solve_multiple_robots()
 
 
-# Legacy compatibility functions for test runner
-def part1(filename: str) -> Any:
-    """Legacy function for part 1."""
-    with open(filename, 'r') as f:
-        input_data = f.read()
-    
-    solution = Day18OptimizedSolution()
-    return solution.part1(input_data)
-
-
-def part2(filename: str) -> Any:
-    """Legacy function for part 2."""
-    with open(filename, 'r') as f:
-        input_data = f.read()
-    
-    solution = Day18OptimizedSolution()
-    return solution.part2(input_data)
-
-
 def main():
-    """Main function with dual compatibility."""
-    if len(sys.argv) > 1 or '--test' in sys.argv or '--time' in sys.argv:
-        # New AdventSolution mode
-        solution = Day18OptimizedSolution()
-        solution.main()
-    else:
-        # Legacy mode for compatibility
-        print(part1("day18_input.txt"))
-        print(part2("day18_input.txt"))
+    """Main execution function."""
+    solution = Day18OptimizedSolution()
+    solution.main()
 
 
 if __name__ == "__main__":

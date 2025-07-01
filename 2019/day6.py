@@ -438,67 +438,8 @@ class Day6Solution(AdventSolution):
         print(f"Part 2 - Orbital transfers: {self.part2(input_data)}")
 
 
-# Legacy functions for test runner compatibility
-def part1(input_data: str = None) -> int:
-    """Legacy function for test runner compatibility."""
-    if input_data is None:
-        # Auto-discover input file
-        import os
-        day = 6
-        possible_files = [
-            f"day{day}_input.txt",
-            f"day{day}input.txt", 
-            f"input{day}.txt",
-            "input.txt"
-        ]
-        
-        input_file = None
-        for filename in possible_files:
-            if os.path.exists(filename):
-                input_file = filename
-                break
-        
-        if input_file is None:
-            raise FileNotFoundError(f"No input file found for day {day}")
-        
-        with open(input_file, 'r') as f:
-            input_data = f.read()
-    
-    solution = Day6Solution()
-    return solution.part1(input_data)
-
-
-def part2(input_data: str = None) -> int:
-    """Legacy function for test runner compatibility."""
-    if input_data is None:
-        # Auto-discover input file
-        import os
-        day = 6
-        possible_files = [
-            f"day{day}_input.txt",
-            f"day{day}input.txt", 
-            f"input{day}.txt",
-            "input.txt"
-        ]
-        
-        input_file = None
-        for filename in possible_files:
-            if os.path.exists(filename):
-                input_file = filename
-                break
-        
-        if input_file is None:
-            raise FileNotFoundError(f"No input file found for day {day}")
-        
-        with open(input_file, 'r') as f:
-            input_data = f.read()
-    
-    solution = Day6Solution()
-    return solution.part2(input_data)
-
-
 def main():
-    """Main function to run the enhanced solution."""
+    """Main execution function."""
     solution = Day6Solution()
     
     # If run with analyze flag, show comprehensive analysis
