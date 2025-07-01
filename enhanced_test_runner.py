@@ -382,44 +382,49 @@ class EnhancedTestRunner:
     
     def run_solution_with_monitoring(self, solution_func: Callable, 
                                    input_data: str, iterations: int = 1) -> Tuple[Any, PerformanceMetrics]:
-        """Run solution with comprehensive monitoring."""
-        memory_monitor = MemoryMonitor()
+        """Run solution with lightweight monitoring to avoid threading issues."""
         times = []
         results = []
+        final_metrics = PerformanceMetrics()
+        
+        # Get memory baseline before any iterations
+        process = psutil.Process()
+        start_memory = process.memory_info().rss / 1024 / 1024  # MB
+        peak_memory = start_memory
         
         for i in range(iterations):
-            # Start monitoring
-            memory_monitor.start_monitoring()
+            # Lightweight timing - no background threads
             start_time = time.perf_counter()
             
             try:
                 result = solution_func(input_data)
                 end_time = time.perf_counter()
                 
-                # Stop monitoring
-                memory_metrics = memory_monitor.stop_monitoring()
+                # Quick memory sample after execution
+                current_memory = process.memory_info().rss / 1024 / 1024  # MB
+                peak_memory = max(peak_memory, current_memory)
                 
                 execution_time = end_time - start_time
                 times.append(execution_time)
                 results.append(result)
                 
-                # Copy memory metrics for this iteration
-                if i == 0:  # Use first iteration for memory metrics
-                    final_metrics = memory_metrics
-                    final_metrics.execution_time = execution_time
-                
             except Exception as e:
-                memory_monitor.stop_monitoring()
                 raise e
         
-        # Calculate statistical metrics
+        # Set memory metrics (lightweight approach)
+        final_metrics.memory_peak = peak_memory
+        final_metrics.memory_delta = peak_memory - start_memory
+        
+        # Calculate statistical metrics from timing data
         if len(times) > 1:
+            final_metrics.execution_time = statistics.median(times)  # Use median for most representative time
             final_metrics.mean_time = statistics.mean(times)
             final_metrics.median_time = statistics.median(times)
             final_metrics.std_dev = statistics.stdev(times)
             final_metrics.min_time = min(times)
             final_metrics.max_time = max(times)
         else:
+            final_metrics.execution_time = times[0]
             final_metrics.mean_time = times[0]
             final_metrics.median_time = times[0]
             final_metrics.min_time = times[0]
@@ -603,7 +608,7 @@ class EnhancedTestRunner:
             # Execute part 1 with monitoring
             if hasattr(solution_instance, 'part1'):
                 part1_result, part1_metrics = self.run_solution_with_monitoring(
-                    solution_instance.part1, input_data, iterations=3
+                    solution_instance.part1, input_data, iterations=1
                 )
                 result.part1_result = part1_result
                 result.part1_metrics = part1_metrics
@@ -611,7 +616,7 @@ class EnhancedTestRunner:
             # Execute part 2 with monitoring  
             if hasattr(solution_instance, 'part2'):
                 part2_result, part2_metrics = self.run_solution_with_monitoring(
-                    solution_instance.part2, input_data, iterations=3
+                    solution_instance.part2, input_data, iterations=1
                 )
                 result.part2_result = part2_result
                 result.part2_metrics = part2_metrics
