@@ -444,35 +444,6 @@ class Day15Solution(AdventSolution):
         
         return False
 
-# Legacy compatibility functions
-def part1(input_data: str = None) -> int:
-    """Legacy function for part 1 compatibility with test runner."""
-    solution = Day15Solution()
-    if input_data is None:
-        # Use default input discovery
-        results = solution.run(part=1)
-        return results.get('part1', 0)
-    else:
-        return solution.part1(input_data)
-
-def part2(input_data: str = None) -> int:
-    """Legacy function for part 2 compatibility with test runner."""
-    solution = Day15Solution()
-    if input_data is None:
-        # Use default input discovery
-        results = solution.run(part=2)
-        return results.get('part2', 0)
-    else:
-        return solution.part2(input_data)
-
-def day15p1() -> int:
-    """Legacy function for part 1."""
-    return part1()
-
-def day15p2() -> int:
-    """Legacy function for part 2."""
-    return part2()
-
 def main():
     """Main execution function."""
     solution = Day15Solution()

@@ -171,24 +171,6 @@ class Day10Solution(AdventSolution):
         return (angle + 360) % 360
 
 
-# Legacy compatibility functions for test runner
-def part1(input_data: str = None) -> int:
-    """Part 1 function compatible with test runner."""
-    solution = Day10Solution()
-    if input_data is None:
-        # Use actual input file
-        input_data = solution._load_input()
-    return solution.part1(input_data)
-
-
-def part2(input_data: str = None) -> int:
-    """Part 2 function compatible with test runner."""
-    solution = Day10Solution()
-    if input_data is None:
-        # Use actual input file
-        input_data = solution._load_input()
-    return solution.part2(input_data)
-
 def main():
     """Main execution function."""
     solution = Day10Solution()

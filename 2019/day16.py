@@ -352,53 +352,6 @@ class Day16Solution(AdventSolution):
             print(f"❌ Validation failed with error: {e}")
             return False
 
-# Legacy compatibility functions
-def part1(input_data: str = None) -> str:
-    """Legacy function for part 1 compatibility with test runner."""
-    solution = Day16Solution()
-    if input_data is None:
-        # Use default input discovery
-        results = solution.run(part=1)
-        return results.get('part1', "")
-    else:
-        return solution.part1(input_data)
-
-def part2(input_data: str = None) -> str:
-    """Legacy function for part 2 compatibility with test runner."""
-    solution = Day16Solution()
-    if input_data is None:
-        # Use default input discovery
-        results = solution.run(part=2)
-        return results.get('part2', "")
-    else:
-        return solution.part2(input_data)
-
-def solve_part1(signal_str: str, phases: int = 100) -> str:
-    """Legacy function for direct solving."""
-    processor = FFTProcessor()
-    signal = [int(d) for d in signal_str.strip()]
-    processed = processor.process_signal_multiple_phases(signal, phases)
-    return processor.extract_message(processed, 0, 8)
-
-def solve_part2(signal_str: str, phases: int = 100) -> str:
-    """Legacy function for direct solving."""
-    solution = Day16Solution()
-    return solution.part2(signal_str)
-
-def solve_day16(filename: str = "day16_input.txt") -> tuple[str, str]:
-    """Legacy function returning both parts."""
-    try:
-        with open(filename, 'r') as f:
-            signal_str = f.read().strip()
-    except FileNotFoundError:
-        signal_str = "59796737047664322543488505082147966997246465580805791578417462788780740484409625674676660947541571448910007002821454068945653911486140823168233915285229075374000888029977800341663586046622003620770361738270014246730936046471831804308263177331723460787712423587453725840042234550299991238029307205348958992794024402253747340630378944672300874691478631846617861255015770298699407254311889484508545861264449878984624330324228278057377313029802505376260196904213746281830214352337622013473019245081834854781277565706545720492282616488950731291974328672252657631353765496979142830459889682475397686651923318015627694176893643969864689257620026916615305397"
-    
-    solution = Day16Solution()
-    part1_result = solution.part1(signal_str)
-    part2_result = solution.part2(signal_str)
-    
-    return part1_result, part2_result
-
 def main():
     """Main execution function."""
     solution = Day16Solution()

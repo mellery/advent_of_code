@@ -231,27 +231,8 @@ dotted black bags contain no other bags."""
         return True
 
 
-# Legacy compatibility functions for test runner
-def part1(input_data: str = None) -> int:
-    """Part 1 function compatible with test runner."""
-    solution = Day7Solution()
-    if input_data is None:
-        # Use actual input file
-        input_data = solution._load_input()
-    return solution.part1(input_data)
-
-
-def part2(input_data: str = None) -> int:
-    """Part 2 function compatible with test runner."""
-    solution = Day7Solution()
-    if input_data is None:
-        # Use actual input file
-        input_data = solution._load_input()
-    return solution.part2(input_data)
-
-
 def main():
-    """Main function to run the solution."""
+    """Main execution function."""
     solution = Day7Solution()
     solution.main()
 
