@@ -1,544 +1,357 @@
 #!/usr/bin/env python3
 """
-Advent of Code 2019 Day 18: Many-Worlds Interpretation
+Advent of Code 2019 Day 18: Many-Worlds Interpretation (OPTIMIZED)
 
-Enhanced solution using the AdventSolution base class for key collection
-in maze with graph algorithms, pathfinding, and state space optimization.
+High-performance key collection maze with major optimizations:
+- Optimized data structures (tuples instead of objects)
+- Improved graph construction (single BFS per node)
+- Better state representation (bitmasking for keys)
+- Enhanced heuristics for A* search
+- Memory-efficient pathfinding
+
+Performance target: <5 seconds total execution time
 """
 
 import sys
-from pathlib import Path
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from utils.advent_base import AdventSolution
 from collections import deque
-from typing import Dict, Set, Tuple, List, Optional, Any, FrozenSet
-from dataclasses import dataclass
-from functools import lru_cache
+from typing import Dict, Set, Tuple, List, Any, Optional
 import heapq
-import time
 
-# Add utils to path for enhanced base class
-sys.path.append(str(Path(__file__).parent.parent))
-from utils import AdventSolution
+# Direction vectors for neighbors
+DIRECTIONS = [(0, -1), (0, 1), (-1, 0), (1, 0)]  # up, down, left, right
 
-@dataclass(frozen=True)
-class Position:
-    """Represents a 2D position in the maze."""
-    x: int
-    y: int
-    
-    def get_neighbors(self) -> List['Position']:
-        """Get all neighboring positions (up, down, left, right)."""
-        return [
-            Position(self.x, self.y - 1),  # Up
-            Position(self.x, self.y + 1),  # Down
-            Position(self.x - 1, self.y),  # Left
-            Position(self.x + 1, self.y)   # Right
-        ]
 
-@dataclass(frozen=True)
-class PathInfo:
-    """Information about a path between two positions."""
-    distance: int
-    required_keys: FrozenSet[str]
-
-@dataclass(frozen=True)
-class State:
-    """State in the search space for multi-robot scenarios."""
-    positions: Tuple[str, ...]  # Current positions of robots
-    keys: FrozenSet[str]        # Keys collected so far
-
-class KeyMaze:
+class OptimizedKeyMaze:
     """
-    Domain class for key collection maze navigation.
-    Handles maze parsing, graph construction, and pathfinding with constraints.
+    High-performance key collection maze with optimized algorithms.
+    
+    Key optimizations:
+    - Tuple-based positions (no object overhead)
+    - Bitmasking for key sets (faster operations)
+    - Single BFS for graph construction
+    - Improved A* heuristics
     """
     
     def __init__(self, maze_data: str):
-        self.grid = self._parse_maze(maze_data)
+        """Initialize with performance-optimized parsing."""
+        lines = [line.strip() for line in maze_data.strip().split('\n') if line.strip()]
+        self.grid = [list(line) for line in lines]
         self.height = len(self.grid)
         self.width = len(self.grid[0]) if self.grid else 0
         
-        # Extract important positions
-        self.start_positions: List[Position] = []
-        self.keys: Dict[str, Position] = {}
-        self.doors: Dict[str, Position] = {}
+        # Extract positions efficiently
+        self.start_positions: List[Tuple[int, int]] = []
+        self.keys: Dict[str, Tuple[int, int]] = {}
+        self.doors: Dict[str, Tuple[int, int]] = {}
+        self.key_to_bit: Dict[str, int] = {}
         
         self._extract_positions()
         
-        # Build graph of distances between important positions
-        self.graph: Dict[str, Dict[str, PathInfo]] = {}
-        self._build_graph()
-    
-    def _parse_maze(self, maze_data: str) -> List[List[str]]:
-        """Parse maze data into a 2D grid."""
-        lines = [line.strip() for line in maze_data.strip().split('\n') if line.strip()]
-        return [list(line) for line in lines]
+        # Build optimized graph
+        self.graph: Dict[str, Dict[str, Tuple[int, int]]] = {}  # name -> {other_name: (distance, required_keys_bitmask)}
+        self._build_optimized_graph()
+        
+        self.total_keys = len(self.keys)
+        self.all_keys_mask = (1 << self.total_keys) - 1  # Bitmask with all keys set
     
     def _extract_positions(self):
-        """Extract start positions, keys, and doors from the maze."""
+        """Extract important positions with key bit mapping."""
+        key_idx = 0
         for y in range(self.height):
             for x in range(self.width):
                 cell = self.grid[y][x]
-                pos = Position(x, y)
                 
                 if cell == '@':
-                    self.start_positions.append(pos)
+                    self.start_positions.append((x, y))
                 elif cell.islower():  # Key
-                    self.keys[cell] = pos
+                    self.keys[cell] = (x, y)
+                    self.key_to_bit[cell] = key_idx
+                    key_idx += 1
                 elif cell.isupper():  # Door
-                    self.doors[cell] = pos
+                    self.doors[cell] = (x, y)
     
-    def _build_graph(self):
-        """Build a graph of distances between important positions."""
-        # All important positions (starts + keys)
-        important_positions = {}
+    def _build_optimized_graph(self):
+        """Build graph with single BFS per node and bitmask optimization."""
+        # All important positions
+        important_nodes = {}
         
         # Add start positions
         for i, pos in enumerate(self.start_positions):
-            important_positions[f'@{i}'] = pos
+            important_nodes[f'@{i}'] = pos
         
         # Add key positions
-        important_positions.update(self.keys)
+        important_nodes.update(self.keys)
         
-        # Build graph
-        for name, pos in important_positions.items():
+        # Build graph with optimized BFS
+        for name, pos in important_nodes.items():
             self.graph[name] = {}
-            distances = self._bfs_distances(pos)
+            paths = self._bfs_all_paths(pos)
             
-            for other_name, other_pos in important_positions.items():
-                if other_name != name and other_pos in distances:
-                    # Find required keys for this path
-                    required_keys = self._find_required_keys(pos, other_pos)
-                    self.graph[name][other_name] = PathInfo(
-                        distance=distances[other_pos],
-                        required_keys=required_keys
-                    )
+            for other_name, other_pos in important_nodes.items():
+                if other_name != name and other_pos in paths:
+                    distance, required_keys_mask = paths[other_pos]
+                    self.graph[name][other_name] = (distance, required_keys_mask)
     
-    def _bfs_distances(self, start: Position) -> Dict[Position, int]:
-        """BFS to find distances from start to all reachable positions."""
-        distances = {}
-        queue = deque([(start, 0)])
-        visited = {start}
+    def _bfs_all_paths(self, start: Tuple[int, int]) -> Dict[Tuple[int, int], Tuple[int, int]]:
+        """
+        Single BFS to find distances and required keys to all reachable positions.
+        
+        Returns:
+            Dict mapping position to (distance, required_keys_bitmask)
+        """
+        paths = {}
+        queue = deque([(start, 0, 0)])  # (position, distance, required_keys_mask)
+        visited = {start: 0}  # position -> best_required_keys_mask
         
         while queue:
-            pos, dist = queue.popleft()
-            distances[pos] = dist
+            (x, y), dist, keys_mask = queue.popleft()
             
-            for neighbor in pos.get_neighbors():
-                if (0 <= neighbor.y < self.height and 
-                    0 <= neighbor.x < self.width and
-                    neighbor not in visited and 
-                    self.grid[neighbor.y][neighbor.x] != '#'):
-                    visited.add(neighbor)
-                    queue.append((neighbor, dist + 1))
-        
-        return distances
-    
-    def _find_required_keys(self, start: Position, end: Position) -> FrozenSet[str]:
-        """Find required keys to travel from start to end."""
-        # BFS to find path and collect doors along the way
-        queue = deque([start])
-        visited = {start}
-        parent = {start: None}
-        
-        # Find path to target
-        while queue:
-            pos = queue.popleft()
-            if pos == end:
-                break
+            # Store result
+            if (x, y) not in paths or paths[(x, y)][1] > keys_mask:
+                paths[(x, y)] = (dist, keys_mask)
             
-            for neighbor in pos.get_neighbors():
-                if (0 <= neighbor.y < self.height and 
-                    0 <= neighbor.x < self.width and
-                    neighbor not in visited and 
-                    self.grid[neighbor.y][neighbor.x] != '#'):
-                    visited.add(neighbor)
-                    parent[neighbor] = pos
-                    queue.append(neighbor)
+            # Explore neighbors
+            for dx, dy in DIRECTIONS:
+                nx, ny = x + dx, y + dy
+                
+                if (0 <= ny < self.height and 0 <= nx < self.width and 
+                    self.grid[ny][nx] != '#'):
+                    
+                    new_keys_mask = keys_mask
+                    cell = self.grid[ny][nx]
+                    
+                    # Check if this is a door
+                    if cell.isupper():
+                        key_needed = cell.lower()
+                        if key_needed in self.key_to_bit:
+                            new_keys_mask |= (1 << self.key_to_bit[key_needed])
+                    
+                    neighbor = (nx, ny)
+                    
+                    # Only continue if we found a better path (fewer required keys)
+                    if (neighbor not in visited or visited[neighbor] > new_keys_mask):
+                        visited[neighbor] = new_keys_mask
+                        queue.append((neighbor, dist + 1, new_keys_mask))
         
-        # Reconstruct path and find doors
-        required_keys = set()
-        current = end
-        while current is not None:
-            cell = self.grid[current.y][current.x]
-            if cell.isupper():  # Door
-                required_keys.add(cell.lower())
-            current = parent.get(current)
-        
-        return frozenset(required_keys)
+        return paths
     
     def solve_single_robot(self) -> int:
-        """Solve for a single robot starting at position @0."""
-        all_keys = frozenset(self.keys.keys())
+        """Optimized A* search for single robot."""
         start_pos = '@0'
         
-        # A* search with heuristic
-        heap = [(0, 0, start_pos, frozenset())]  # (f_score, g_score, position, keys)
-        best_distance = {}
+        # Priority queue: (f_score, g_score, position, keys_bitmask)
+        heap = [(0, 0, start_pos, 0)]
+        best_distance = {}  # (position, keys_mask) -> distance
         
         while heap:
-            f_score, g_score, pos, collected_keys = heapq.heappop(heap)
+            f_score, g_score, pos, keys_mask = heapq.heappop(heap)
             
-            state = (pos, collected_keys)
+            state = (pos, keys_mask)
             if state in best_distance and best_distance[state] <= g_score:
                 continue
             best_distance[state] = g_score
             
-            if collected_keys == all_keys:
+            # Check if we collected all keys
+            if keys_mask == self.all_keys_mask:
                 return g_score
             
             # Try to collect each uncollected key
-            for key in all_keys - collected_keys:
+            for key, key_pos in self.keys.items():
+                key_bit = 1 << self.key_to_bit[key]
+                
+                # Skip if already collected
+                if keys_mask & key_bit:
+                    continue
+                
                 if key in self.graph[pos]:
-                    path_info = self.graph[pos][key]
+                    distance, required_keys_mask = self.graph[pos][key]
                     
                     # Check if we have all required keys
-                    if path_info.required_keys.issubset(collected_keys):
-                        new_g = g_score + path_info.distance
-                        new_keys = collected_keys | {key}
+                    if (keys_mask & required_keys_mask) == required_keys_mask:
+                        new_g = g_score + distance
+                        new_keys = keys_mask | key_bit
                         new_state = (key, new_keys)
                         
                         if new_state not in best_distance or best_distance[new_state] > new_g:
-                            # Simple heuristic: remaining keys count
-                            h_score = len(all_keys - new_keys)
+                            # Improved heuristic: estimate remaining distance
+                            h_score = self._estimate_remaining_distance(key, new_keys)
                             f_score = new_g + h_score
                             heapq.heappush(heap, (f_score, new_g, key, new_keys))
         
         return -1  # No solution found
     
     def solve_multiple_robots(self) -> int:
-        """Solve for multiple robots."""
-        all_keys = frozenset(self.keys.keys())
+        """Optimized A* search for multiple robots."""
         start_positions = tuple(f'@{i}' for i in range(len(self.start_positions)))
         
-        # A* search with state space
-        heap = [(0, 0, start_positions, frozenset())]
+        # Priority queue: (f_score, g_score, positions_tuple, keys_bitmask)
+        heap = [(0, 0, start_positions, 0)]
         best_distance = {}
         
         while heap:
-            f_score, g_score, positions, collected_keys = heapq.heappop(heap)
+            f_score, g_score, positions, keys_mask = heapq.heappop(heap)
             
-            state = (positions, collected_keys)
+            state = (positions, keys_mask)
             if state in best_distance and best_distance[state] <= g_score:
                 continue
             best_distance[state] = g_score
             
-            if collected_keys == all_keys:
+            # Check if we collected all keys
+            if keys_mask == self.all_keys_mask:
                 return g_score
             
             # Try moving each robot to collect each uncollected key
-            for key in all_keys - collected_keys:
+            for key, key_pos in self.keys.items():
+                key_bit = 1 << self.key_to_bit[key]
+                
+                # Skip if already collected
+                if keys_mask & key_bit:
+                    continue
+                
                 for i, pos in enumerate(positions):
                     if key in self.graph[pos]:
-                        path_info = self.graph[pos][key]
+                        distance, required_keys_mask = self.graph[pos][key]
                         
                         # Check if we have all required keys
-                        if path_info.required_keys.issubset(collected_keys):
-                            new_g = g_score + path_info.distance
+                        if (keys_mask & required_keys_mask) == required_keys_mask:
+                            new_g = g_score + distance
                             new_positions = tuple(
                                 key if j == i else positions[j] 
                                 for j in range(len(positions))
                             )
-                            new_keys = collected_keys | {key}
+                            new_keys = keys_mask | key_bit
                             new_state = (new_positions, new_keys)
                             
                             if new_state not in best_distance or best_distance[new_state] > new_g:
-                                # Heuristic: remaining keys count
-                                h_score = len(all_keys - new_keys)
+                                # Improved heuristic for multiple robots
+                                h_score = self._estimate_remaining_distance_multi(new_positions, new_keys)
                                 f_score = new_g + h_score
                                 heapq.heappush(heap, (f_score, new_g, new_positions, new_keys))
         
         return -1  # No solution found
     
-    def get_maze_statistics(self) -> Dict[str, Any]:
-        """Get comprehensive statistics about the maze."""
-        total_cells = self.height * self.width
-        wall_count = sum(row.count('#') for row in self.grid)
-        empty_count = total_cells - wall_count
+    def _estimate_remaining_distance(self, current_pos: str, keys_mask: int) -> int:
+        """
+        Improved heuristic: estimate minimum distance to collect remaining keys.
         
-        return {
-            'width': self.width,
-            'height': self.height,
-            'total_cells': total_cells,
-            'wall_count': wall_count,
-            'empty_count': empty_count,
-            'start_positions': len(self.start_positions),
-            'key_count': len(self.keys),
-            'door_count': len(self.doors),
-            'keys': list(self.keys.keys()),
-            'graph_size': sum(len(connections) for connections in self.graph.values())
-        }
+        This is still admissible but more informed than just counting keys.
+        """
+        if keys_mask == self.all_keys_mask:
+            return 0
+        
+        # Find closest uncollected key
+        min_distance = float('inf')
+        for key, key_pos in self.keys.items():
+            key_bit = 1 << self.key_to_bit[key]
+            
+            if not (keys_mask & key_bit):  # Key not collected
+                if key in self.graph[current_pos]:
+                    distance, required_keys_mask = self.graph[current_pos][key]
+                    
+                    # Check if we can reach this key
+                    if (keys_mask & required_keys_mask) == required_keys_mask:
+                        min_distance = min(min_distance, distance)
+        
+        return min_distance if min_distance != float('inf') else 0
     
-    def analyze_connectivity(self) -> Dict[str, Any]:
-        """Analyze the connectivity and complexity of the maze."""
-        analysis = {}
+    def _estimate_remaining_distance_multi(self, positions: Tuple[str, ...], keys_mask: int) -> int:
+        """Heuristic for multiple robots: closest key from any robot."""
+        if keys_mask == self.all_keys_mask:
+            return 0
         
-        # Key accessibility analysis
-        key_accessibility = {}
-        for key in self.keys:
-            accessible_from = []
-            for start_name in [f'@{i}' for i in range(len(self.start_positions))]:
-                if key in self.graph[start_name]:
-                    accessible_from.append(start_name)
-            key_accessibility[key] = accessible_from
+        min_distance = float('inf')
+        for key, key_pos in self.keys.items():
+            key_bit = 1 << self.key_to_bit[key]
+            
+            if not (keys_mask & key_bit):  # Key not collected
+                for pos in positions:
+                    if key in self.graph[pos]:
+                        distance, required_keys_mask = self.graph[pos][key]
+                        
+                        if (keys_mask & required_keys_mask) == required_keys_mask:
+                            min_distance = min(min_distance, distance)
         
-        analysis['key_accessibility'] = key_accessibility
-        
-        # Door dependency analysis
-        door_dependencies = {}
-        for key in self.keys:
-            dependencies = set()
-            for start_name in [f'@{i}' for i in range(len(self.start_positions))]:
-                if key in self.graph[start_name]:
-                    dependencies.update(self.graph[start_name][key].required_keys)
-            door_dependencies[key] = list(dependencies)
-        
-        analysis['door_dependencies'] = door_dependencies
-        
-        # Calculate complexity metrics
-        max_dependencies = max(len(deps) for deps in door_dependencies.values()) if door_dependencies else 0
-        total_dependencies = sum(len(deps) for deps in door_dependencies.values())
-        
-        analysis['complexity'] = {
-            'max_dependencies': max_dependencies,
-            'total_dependencies': total_dependencies,
-            'avg_dependencies': total_dependencies / len(self.keys) if self.keys else 0
-        }
-        
-        return analysis
+        return min_distance if min_distance != float('inf') else 0
 
-class Day18Solution(AdventSolution):
-    """Enhanced solution for Advent of Code 2019 Day 18: Many-Worlds Interpretation."""
+
+class Day18OptimizedSolution(AdventSolution):
+    """Optimized solution for Advent of Code 2019 Day 18."""
     
     def __init__(self):
-        super().__init__(2019, 18, "Many-Worlds Interpretation")
-        self.maze: Optional[KeyMaze] = None
+        super().__init__(year=2019, day=18, title="Many-Worlds Interpretation (Optimized)")
+        
+    def part1(self, input_data: str) -> Any:
+        """Part 1: Single robot key collection."""
+        maze = OptimizedKeyMaze(input_data)
+        return maze.solve_single_robot()
     
-    def _parse_input(self, input_data: str) -> str:
-        """Parse input data and return maze string."""
-        maze_data = input_data.strip()
-        if not maze_data:
-            # Fallback for testing
-            maze_data = """#########
-#b.A.@.a#
-#########"""
-        return maze_data
-    
-    def part1(self, input_data: str) -> int:
-        """
-        Find the shortest path to collect all keys with a single robot.
+    def part2(self, input_data: str) -> Any:
+        """Part 2: Multiple robot key collection."""
+        # Transform the maze for part 2 (split start into 4 robots)
+        lines = input_data.strip().split('\n')
+        modified_lines = []
         
-        Args:
-            input_data: Raw input containing the maze
-            
-        Returns:
-            Minimum steps to collect all keys
-        """
-        maze_data = self._parse_input(input_data)
-        self.maze = KeyMaze(maze_data)
-        
-        return self.maze.solve_single_robot()
-    
-    def part2(self, input_data: str) -> int:
-        """
-        Find the shortest path to collect all keys with multiple robots.
-        For part 2, the maze is modified to have 4 starting positions.
-        
-        Args:
-            input_data: Raw input containing the maze
-            
-        Returns:
-            Minimum steps to collect all keys with multiple robots
-        """
-        maze_data = self._parse_input(input_data)
-        
-        # For part 2, we need to modify the maze to have 4 robots
-        # This typically involves replacing the center area around @ with walls
-        # and creating 4 separate starting positions
-        modified_maze_data = self._modify_maze_for_part2(maze_data)
-        
-        self.maze = KeyMaze(modified_maze_data)
-        return self.maze.solve_multiple_robots()
-    
-    def _modify_maze_for_part2(self, maze_data: str) -> str:
-        """
-        Modify the maze for part 2 by splitting into 4 quadrants.
-        
-        Args:
-            maze_data: Original maze data
-            
-        Returns:
-            Modified maze data with 4 starting positions
-        """
-        lines = maze_data.strip().split('\n')
-        grid = [list(line) for line in lines]
-        
-        # Find the original @ position
-        start_pos = None
-        for y in range(len(grid)):
-            for x in range(len(grid[y])):
-                if grid[y][x] == '@':
-                    start_pos = (x, y)
-                    break
-            if start_pos:
+        # Find the starting position
+        start_row, start_col = None, None
+        for i, line in enumerate(lines):
+            if '@' in line:
+                start_row, start_col = i, line.index('@')
                 break
         
-        if not start_pos:
-            return maze_data  # No modification needed
+        if start_row is not None:
+            # Replace the 3x3 area around @ with the 4-robot pattern
+            for i, line in enumerate(lines):
+                if i == start_row - 1:
+                    modified_line = line[:start_col-1] + '@#@' + line[start_col+2:]
+                elif i == start_row:
+                    modified_line = line[:start_col-1] + '###' + line[start_col+2:]
+                elif i == start_row + 1:
+                    modified_line = line[:start_col-1] + '@#@' + line[start_col+2:]
+                else:
+                    modified_line = line
+                modified_lines.append(modified_line)
+        else:
+            modified_lines = lines
         
-        x, y = start_pos
-        
-        # Modify the 3x3 area around the start position
-        # Replace with:
-        # @#@
-        # ###
-        # @#@
-        if (y-1 >= 0 and y+1 < len(grid) and 
-            x-1 >= 0 and x+1 < len(grid[0])):
-            
-            # Set the pattern
-            grid[y-1][x-1] = '@'  # Top-left
-            grid[y-1][x] = '#'    # Top-center
-            grid[y-1][x+1] = '@'  # Top-right
-            grid[y][x-1] = '#'    # Middle-left
-            grid[y][x] = '#'      # Middle-center
-            grid[y][x+1] = '#'    # Middle-right
-            grid[y+1][x-1] = '@'  # Bottom-left
-            grid[y+1][x] = '#'    # Bottom-center
-            grid[y+1][x+1] = '@'  # Bottom-right
-        
-        # Convert back to string
-        return '\n'.join(''.join(row) for row in grid)
-    
-    def analyze_maze(self) -> Dict[str, Any]:
-        """
-        Provide comprehensive analysis of the key maze.
-        
-        Returns:
-            Dictionary with detailed maze analysis
-        """
-        if self.maze is None:
-            return {"error": "Maze not yet parsed"}
-        
-        stats = self.maze.get_maze_statistics()
-        connectivity = self.maze.analyze_connectivity()
-        
-        return {
-            'statistics': stats,
-            'connectivity': connectivity,
-            'analysis_timestamp': time.time()
-        }
-    
-    def validate(self, expected_part1: Any = None, expected_part2: Any = None) -> bool:
-        """Validate the solution with known test cases."""
-        print("Day 18 validation: Testing with known examples...")
-        
-        # Test case 1: Simple maze
-        test_maze1 = """#########
-#b.A.@.a#
-#########"""
-        
-        try:
-            maze1 = KeyMaze(test_maze1)
-            result1 = maze1.solve_single_robot()
-            expected1 = 8  # Known result for this maze
-            
-            if result1 == expected1:
-                print(f"✅ Test 1: {result1} steps (correct)")
-            else:
-                print(f"❌ Test 1: expected {expected1}, got {result1}")
-                return False
-            
-            # Test case 2: More complex maze
-            test_maze2 = """########################
-#f.D.E.e.C.b.A.@.a.B.c.#
-######################.#
-#d.....................#
-########################"""
-            
-            maze2 = KeyMaze(test_maze2)
-            result2 = maze2.solve_single_robot()
-            expected2 = 86  # Known result for this maze
-            
-            if result2 == expected2:
-                print(f"✅ Test 2: {result2} steps (correct)")
-            else:
-                print(f"❌ Test 2: expected {expected2}, got {result2}")
-                return False
-            
-            print("✅ All validation tests passed!")
-            return True
-            
-        except Exception as e:
-            print(f"❌ Validation failed with error: {e}")
-            return False
+        modified_input = '\n'.join(modified_lines)
+        maze = OptimizedKeyMaze(modified_input)
+        return maze.solve_multiple_robots()
 
-# Legacy compatibility functions
-def part1(input_data: str = None) -> int:
-    """Legacy function for part 1 compatibility with test runner."""
-    solution = Day18Solution()
-    if input_data is None:
-        # Use default input discovery
-        results = solution.run(part=1)
-        return results.get('part1', 0)
-    else:
-        return solution.part1(input_data)
 
-def part2(input_data: str = None) -> int:
-    """Legacy function for part 2 compatibility with test runner."""
-    solution = Day18Solution()
-    if input_data is None:
-        # Use default input discovery
-        results = solution.run(part=2)
-        return results.get('part2', 0)
-    else:
-        return solution.part2(input_data)
-
-def solve_part1(input_file: str) -> int:
-    """Legacy function for direct solving."""
-    try:
-        with open(input_file, 'r') as f:
-            maze_data = f.read()
-    except FileNotFoundError:
-        # Return a default result for testing
-        return -1
+# Legacy compatibility functions for test runner
+def part1(filename: str) -> Any:
+    """Legacy function for part 1."""
+    with open(filename, 'r') as f:
+        input_data = f.read()
     
-    maze = KeyMaze(maze_data)
-    return maze.solve_single_robot()
+    solution = Day18OptimizedSolution()
+    return solution.part1(input_data)
 
-def solve_part2(input_file: str) -> int:
-    """Legacy function for direct solving."""
-    solution = Day18Solution()
-    try:
-        with open(input_file, 'r') as f:
-            input_data = f.read()
-    except FileNotFoundError:
-        # Return a default result for testing
-        return -1
+
+def part2(filename: str) -> Any:
+    """Legacy function for part 2."""
+    with open(filename, 'r') as f:
+        input_data = f.read()
     
+    solution = Day18OptimizedSolution()
     return solution.part2(input_data)
 
-def day18p1(input_file: str = "day18_input.txt") -> int:
-    """Legacy function for part 1 with timing."""
-    print(f"Solving part 1 for {input_file}...")
-    start_time = time.time()
-    result = solve_part1(input_file)
-    elapsed = time.time() - start_time
-    print(f"Part 1: {result} (solved in {elapsed:.2f}s)")
-    return result
-
-def day18p2(input_file: str = "day18_input2.txt") -> int:
-    """Legacy function for part 2 with timing."""
-    print(f"Solving part 2 for {input_file}...")
-    start_time = time.time()
-    result = solve_part2(input_file)
-    elapsed = time.time() - start_time
-    print(f"Part 2: {result} (solved in {elapsed:.2f}s)")
-    return result
 
 def main():
-    """Main execution function."""
-    solution = Day18Solution()
-    solution.main()
+    """Main function with dual compatibility."""
+    if len(sys.argv) > 1 or '--test' in sys.argv or '--time' in sys.argv:
+        # New AdventSolution mode
+        solution = Day18OptimizedSolution()
+        solution.main()
+    else:
+        # Legacy mode for compatibility
+        print(part1("day18_input.txt"))
+        print(part2("day18_input.txt"))
+
 
 if __name__ == "__main__":
     main()

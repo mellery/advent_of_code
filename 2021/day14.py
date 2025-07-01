@@ -55,7 +55,7 @@ def part1(filename):
     
     template, poly = load_pairs(filename)
     pairs = builddict(template)
-    print(pairs)
+    #print(pairs)
 
     steps = 40
     for i in range(0,steps):

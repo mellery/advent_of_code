@@ -72,7 +72,7 @@ def get_point_pairs(filename):
                             grid[point] = 1
                         temp += 1
                 elif slope == -1:
-                    print(f"slope {slope}, {end_point[i]},{start_point[i]}")
+                    #print(f"slope {slope}, {end_point[i]},{start_point[i]}")
                     temp = 0
                     for x in range(end_point[i][0],start_point[i][0]+1):
                         point = (x,end_point[i][1]+temp)
@@ -95,7 +95,7 @@ def get_point_pairs(filename):
                             grid[point] = 1
                         temp += 1
                 elif slope == -1:
-                    print(f"slope {slope}, {start_point[i]},{end_point[i]}")
+                    #print(f"slope {slope}, {start_point[i]},{end_point[i]}")
                     temp = 0
                     for x in range(start_point[i][0],end_point[i][0]+1):
                         point = (x,start_point[i][1]+temp)
@@ -112,7 +112,7 @@ def part1(filename):
     count = 0 
     for k,i in grid.items():
         if i > 1:
-            print(k,i)
+            #print(k,i)
             count += 1
     print(count)
         
@@ -130,7 +130,7 @@ def part2(filename):
 def main():
     day = '5'
     #print(part1(f"day{day}_ex1.txt"))
-    #print(part1(f"day{day}_input.txt"))
+    print(part1(f"day{day}_input.txt"))
 
     #print(part2(f"day{day}_ex1.txt"))
     print(part2(f"day{day}_input.txt"))

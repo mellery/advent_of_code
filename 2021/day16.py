@@ -83,9 +83,9 @@ def part1(input):
     total = b.packet_version
     x = 1
     for s in b.sub_packets:
-        print("SUB_PACKET",x)
+        #print("SUB_PACKET",x)
         x += 1
-        print(s)
+        #print(s)
         
     print("total",total)
     #left_to_parse = b.total_length_of_bits

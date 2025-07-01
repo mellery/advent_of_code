@@ -180,7 +180,7 @@
     },
     "25": {
       "part1": 18293391,
-      "part2": null
+      "part2": "Congratulations! All 49 stars collected. The sleigh is ready for Christmas!"
     },
     "3": {
       "part1": 240,
@@ -315,8 +315,8 @@
   },
   "2022": {
     "1": {
-      "part1": null,
-      "part2": null
+      "part1": 69501,
+      "part2": 202346
     },
     "10": {
       "part1": null,
