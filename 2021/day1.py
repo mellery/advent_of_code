@@ -49,53 +49,11 @@ class Day1Solution(AdventSolution):
         return increases
 
 
-# Legacy functions for backward compatibility with test runner
-def get_list_of_numbers(filename):
-    """Legacy function for backward compatibility."""
-    with open(filename) as f:
-        lines = f.readlines()
-        numbers = []
-        for l in lines:
-            number = int(l)
-            numbers.append(number)
-    return numbers
-
-def part1(filename):
-    """Legacy function for backward compatibility."""
-    numbers = get_list_of_numbers(filename)
-    last_number = numbers[0]
-    increases = 0
-
-    for n in numbers[1:]:
-        if n > last_number:
-            increases += 1
-        last_number = n
-    return increases
-
-def part2(filename):
-    """Legacy function for backward compatibility."""
-    numbers = get_list_of_numbers(filename)
-    last_number = numbers[0] + numbers[1] + numbers[2]
-    increases = 0
-
-    for i in range(1, len(numbers) - 2):
-        nsum = numbers[i] + numbers[i + 1] + numbers[i + 2]
-        if nsum > last_number:
-            increases += 1
-        last_number = nsum
-    return increases
 
 def main():
-    """Main function - can be called in legacy mode or new mode."""
-    # Check if we're being run directly or imported
-    if len(sys.argv) > 1 or '--test' in sys.argv or '--time' in sys.argv:
-        # New AdventSolution mode
-        solution = Day1Solution()
-        solution.main()
-    else:
-        # Legacy mode for compatibility
-        print(part1("day1_input.txt"))
-        print(part2("day1_input.txt"))
+    """Main execution function."""
+    solution = Day1Solution()
+    solution.main()
 
 if __name__ == "__main__":
     main()

@@ -9,9 +9,6 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils import (
-    get_grid, setup_day_args, find_input_file, validate_solution, run_solution
-)
 from utils.advent_base import AdventSolution
 from typing import Any, Dict, Tuple, List, Set
 
@@ -66,17 +63,18 @@ class Day11Solution(AdventSolution):
     def __init__(self):
         super().__init__(2021, 11, "Dumbo Octopus")
     
-    def part1(self, filename: str) -> Any:
+    def part1(self, input_data: str) -> Any:
         """
         Count total flashes after 100 steps.
         
         Args:
-            filename: Path to the input file
+            input_data: Raw input data as string
             
         Returns:
             Total number of flashes after 100 steps
         """
-        grid_data = get_grid(filename, lambda x: int(x))
+        lines = input_data.strip().split('\n')
+        grid_data = [[int(c) for c in line.strip()] for line in lines if line.strip()]
         grid = {}
         rows = len(grid_data)
         cols = len(grid_data[0])
@@ -92,17 +90,18 @@ class Day11Solution(AdventSolution):
         
         return total_flashes
     
-    def part2(self, filename: str) -> Any:
+    def part2(self, input_data: str) -> Any:
         """
         Find the step when all octopuses flash simultaneously.
         
         Args:
-            filename: Path to the input file
+            input_data: Raw input data as string
             
         Returns:
             The step number when all octopuses flash together
         """
-        grid_data = get_grid(filename, lambda x: int(x))
+        lines = input_data.strip().split('\n')
+        grid_data = [[int(c) for c in line.strip()] for line in lines if line.strip()]
         grid = {}
         rows = len(grid_data)
         cols = len(grid_data[0])
@@ -121,56 +120,10 @@ class Day11Solution(AdventSolution):
                 return step
 
 
-# Legacy functions for backward compatibility
-def part1(filename: str) -> Any:
-    """Legacy function for part 1."""
-    solution = Day11Solution()
-    return solution.part1(filename)
-
-
-def part2(filename: str) -> Any:
-    """Legacy function for part 2."""
-    solution = Day11Solution()
-    return solution.part2(filename)
-
-
 def main():
-    """Main function to run the solution."""
+    """Main execution function."""
     solution = Day11Solution()
-    
-    # Check if we're being called by the legacy test runner
-    if len(sys.argv) > 1 and '--legacy' in sys.argv:
-        # Legacy mode - use the old approach
-        day = '11'
-        args = setup_day_args(day)
-        
-        # Determine input file
-        if args.use_test:
-            input_file = args.test
-        else:
-            input_file = find_input_file(day) or args.input
-        
-        if not os.path.exists(input_file):
-            print(f"Error: Input file '{input_file}' not found")
-            return
-        
-        print(f"Advent of Code 2021 - Day {day}")
-        print(f"Using input file: {input_file}")
-        print("-" * 40)
-        
-        # Run validation if test file exists
-        test_file = args.test
-        if os.path.exists(test_file) and not args.use_test:
-            print("Running validation tests...")
-            validate_solution(part1, part2, test_file, 
-                            expected_part1=1656, expected_part2=195)
-            print("-" * 40)
-        
-        # Run the actual solution
-        run_solution(part1, part2, input_file, args)
-    else:
-        # Enhanced mode - use AdventSolution
-        solution.run()
+    solution.main()
 
 
 if __name__ == "__main__":

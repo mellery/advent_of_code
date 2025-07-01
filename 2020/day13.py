@@ -432,25 +432,13 @@ class Day13Solution(AdventSolution):
         }
 
 
-# Legacy compatibility functions for test runner
-def part1(filename: str) -> Any:
-    """Legacy function for part 1."""
-    with open(filename, 'r') as f:
-        input_data = f.read()
-    
-    solution = Day13Solution()
-    return solution.part1(input_data)
 
 
-def part2(filename: str) -> Any:
-    """Legacy function for part 2."""
-    with open(filename, 'r') as f:
-        input_data = f.read()
-    
+def main():
+    """Main execution function."""
     solution = Day13Solution()
-    return solution.part2(input_data)
+    solution.main()
 
 
 if __name__ == "__main__":
-    solution = Day13Solution()
-    solution.main()
+    main()

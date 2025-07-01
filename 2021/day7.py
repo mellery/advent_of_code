@@ -52,65 +52,11 @@ class Day7Solution(AdventSolution):
         return min_fuel
 
 
-# Legacy functions for backward compatibility with test runner
-def parse_input(input_data):
-    """Parse input data - could be filename or data content."""
-    if isinstance(input_data, str):
-        # If it's a string, check if it's a filename or data
-        if '\n' in input_data or ',' in input_data:
-            # It's data content
-            return [int(x) for x in input_data.strip().split(',')]
-        else:
-            # It's a filename
-            try:
-                with open(input_data, 'r') as f:
-                    return [int(x) for x in f.read().strip().split(',')]
-            except FileNotFoundError:
-                # If file doesn't exist, assume it's a single number
-                return [int(input_data)]
-    elif isinstance(input_data, list):
-        return input_data
-    else:
-        return [int(input_data)]
-
-@lru_cache(maxsize=None)
-def calc_fuel(upper):
-    return sum(range(0, (upper) + 1))
-
-def part1(input_data):
-    input_list = parse_input(input_data)
-    ans = sys.maxsize
-    for pos in range(0, len(input_list)):
-        total = 0
-        for i in range(0, len(input_list)):
-            total += abs(input_list[i] - input_list[pos])
-        if total < ans:
-            ans = total
-    return ans
-
-def part2(input_data):
-    input_list = parse_input(input_data)
-    ans = sys.maxsize
-    for pos in range(0, len(input_list)):
-        total = 0
-        for i in range(0, len(input_list)):
-            total += calc_fuel(abs(input_list[i] - pos))
-        if total < ans:
-            ans = total
-    return ans
 
 def main():
-    """Main function - can be called in legacy mode or new mode."""
-    # Check if we're being run directly with arguments or imported
-    if len(sys.argv) > 1 or '--test' in sys.argv or '--time' in sys.argv:
-        # New AdventSolution mode
-        solution = Day7Solution()
-        solution.main()
-    else:
-        # Legacy mode for compatibility
-        with open("day7_input.txt", 'r') as f:
-            data = f.read().strip()
-        print(part2(data))
+    """Main execution function."""
+    solution = Day7Solution()
+    solution.main()
 
 if __name__ == "__main__":
     main()

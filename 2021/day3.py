@@ -80,87 +80,11 @@ class Day3Solution(AdventSolution):
         return oxygen_int * co2_int
 
 
-# Legacy functions for backward compatibility with test runner
-def get_binary_numbers(filename):
-    """Legacy function for backward compatibility."""
-    with open(filename) as f:
-        lines = f.readlines()
-        numbers = []
-        for l in lines:
-            numbers.append(l.strip())
-        return numbers
-
-def get_most_common_bit(binary_numbers, index):
-    """Legacy function for backward compatibility."""
-    one_count = 0
-    zero_count = 0
-    for b in binary_numbers:
-        if int(b[index]) == 1:
-            one_count += 1
-        else:
-            zero_count += 1
-    if one_count >= zero_count:
-        return 1
-    else:
-        return 0
-
-def part1(filename):
-    """Legacy function for backward compatibility."""
-    binary_numbers = get_binary_numbers(filename)
-    gamma = []
-    epsilon = []
-    for i in range(0, len(binary_numbers[0])):
-        if get_most_common_bit(binary_numbers, i):
-            gamma.append(str(1))
-            epsilon.append(str(0))
-        else:
-            gamma.append(str(0))
-            epsilon.append(str(1))
-    
-    gamma_int = int("".join(gamma), 2)
-    epsilon_int = int("".join(epsilon), 2)
-    return gamma_int * epsilon_int
-
-def part2(filename):
-    """Legacy function for backward compatibility."""
-    binary_numbers = get_binary_numbers(filename)
-    for i in range(0, len(binary_numbers[0])):
-        keep = str(get_most_common_bit(binary_numbers, i))
-        new_list = binary_numbers.copy()
-        for b in binary_numbers:
-            if b[i] != keep:
-                new_list.remove(b)
-        binary_numbers = new_list.copy()
-    oxygen_int = int(binary_numbers[0], 2)
-
-    binary_numbers = get_binary_numbers(filename)
-    for i in range(0, len(binary_numbers[0])):
-        keep = str(get_most_common_bit(binary_numbers, i))
-        
-        if keep == "1":
-            keep = "0"
-        elif keep == "0":
-            keep = "1"
-        new_list = binary_numbers.copy()
-        if len(new_list) > 1:
-            for b in binary_numbers:
-                if str(b[i]) != str(keep):
-                    new_list.remove(b)
-        binary_numbers = new_list.copy()
-
-    co2_int = int(binary_numbers[0], 2)
-    return oxygen_int * co2_int
 
 def main():
-    """Main function - can be called in legacy mode or new mode."""
-    # Check if we're being run directly with arguments or imported
-    if len(sys.argv) > 1 or '--test' in sys.argv or '--time' in sys.argv:
-        # New AdventSolution mode
-        solution = Day3Solution()
-        solution.main()
-    else:
-        # Legacy mode for compatibility
-        print(part2("day3_input.txt"))
+    """Main execution function."""
+    solution = Day3Solution()
+    solution.main()
 
 if __name__ == "__main__":
     main()

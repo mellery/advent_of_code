@@ -9,24 +9,22 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils import (
-    get_lines, setup_day_args, find_input_file, validate_solution, run_solution
-)
 from utils.advent_base import AdventSolution
 from typing import Any, Dict, List, Tuple
 from collections import defaultdict
 
 
-def parse_lines(filename: str) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
-    """Parse input file into list of line segments."""
-    lines = get_lines(filename)
+def parse_lines_from_data(input_data: str) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
+    """Parse input data into list of line segments."""
+    lines = input_data.strip().split('\n')
     segments = []
     
     for line in lines:
-        parts = line.strip().split(' -> ')
-        x1, y1 = map(int, parts[0].split(','))
-        x2, y2 = map(int, parts[1].split(','))
-        segments.append(((x1, y1), (x2, y2)))
+        if line.strip():
+            parts = line.strip().split(' -> ')
+            x1, y1 = map(int, parts[0].split(','))
+            x2, y2 = map(int, parts[1].split(','))
+            segments.append(((x1, y1), (x2, y2)))
     
     return segments
 
@@ -66,9 +64,9 @@ def mark_line_on_grid(grid: Dict[Tuple[int, int], int], start: Tuple[int, int],
                 y += dy
 
 
-def solve_hydrothermal_vents(filename: str, include_diagonal: bool = False) -> int:
+def solve_hydrothermal_vents_from_data(input_data: str, include_diagonal: bool = False) -> int:
     """Solve the hydrothermal vents problem."""
-    segments = parse_lines(filename)
+    segments = parse_lines_from_data(input_data)
     grid = defaultdict(int)
     
     for start, end in segments:
@@ -84,81 +82,37 @@ class Day5Solution(AdventSolution):
     def __init__(self):
         super().__init__(2021, 5, "Hydrothermal Venture")
     
-    def part1(self, filename: str) -> Any:
+    def part1(self, input_data: str) -> Any:
         """
         Count overlap points considering only horizontal and vertical lines.
         
         Args:
-            filename: Path to the input file
+            input_data: Raw input data as string
             
         Returns:
             Number of points where at least two lines overlap
         """
-        return solve_hydrothermal_vents(filename, include_diagonal=False)
+        return solve_hydrothermal_vents_from_data(input_data, include_diagonal=False)
     
-    def part2(self, filename: str) -> Any:
+    def part2(self, input_data: str) -> Any:
         """
         Count overlap points considering horizontal, vertical, and diagonal lines.
         
         Args:
-            filename: Path to the input file
+            input_data: Raw input data as string
             
         Returns:
             Number of points where at least two lines overlap (including diagonals)
         """
-        return solve_hydrothermal_vents(filename, include_diagonal=True)
+        return solve_hydrothermal_vents_from_data(input_data, include_diagonal=True)
 
 
-# Legacy functions for backward compatibility
-def part1(filename: str) -> Any:
-    """Legacy function for part 1."""
-    solution = Day5Solution()
-    return solution.part1(filename)
-
-
-def part2(filename: str) -> Any:
-    """Legacy function for part 2."""
-    solution = Day5Solution()
-    return solution.part2(filename)
 
 
 def main():
-    """Main function to run the solution."""
+    """Main execution function."""
     solution = Day5Solution()
-    
-    # Check if we're being called by the legacy test runner
-    if len(sys.argv) > 1 and '--legacy' in sys.argv:
-        # Legacy mode - use the old approach
-        day = '5'
-        args = setup_day_args(day)
-        
-        # Determine input file
-        if args.use_test:
-            input_file = args.test
-        else:
-            input_file = find_input_file(day) or args.input
-        
-        if not os.path.exists(input_file):
-            print(f"Error: Input file '{input_file}' not found")
-            return
-        
-        print(f"Advent of Code 2021 - Day {day}")
-        print(f"Using input file: {input_file}")
-        print("-" * 40)
-        
-        # Run validation if test file exists
-        test_file = args.test
-        if os.path.exists(test_file) and not args.use_test:
-            print("Running validation tests...")
-            validate_solution(part1, part2, test_file, 
-                            expected_part1=5, expected_part2=12)
-            print("-" * 40)
-        
-        # Run the actual solution
-        run_solution(part1, part2, input_file, args)
-    else:
-        # Enhanced mode - use AdventSolution
-        solution.run()
+    solution.main()
 
 
 if __name__ == "__main__":

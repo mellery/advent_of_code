@@ -555,15 +555,25 @@ class EnhancedTestRunner:
     
     def _execute_enhanced_solution(self, module, input_data: str, result: EnhancedTestResult) -> EnhancedTestResult:
         """Execute enhanced AdventSolution-based solution with strict validation."""
-        # Find the solution class
+        # Find the solution class - prefer concrete implementations over base classes
         solution_class = None
+        candidate_classes = []
         for name in dir(module):
             obj = getattr(module, name)
             if (isinstance(obj, type) and 
                 hasattr(obj, 'part1') and hasattr(obj, 'part2') and
                 'Solution' in name):
+                candidate_classes.append((name, obj))
+        
+        # Prefer classes that are NOT named 'AdventSolution' (i.e., concrete implementations)
+        for name, obj in candidate_classes:
+            if name != 'AdventSolution':
                 solution_class = obj
                 break
+        
+        # If no concrete implementation found, fall back to any solution class
+        if not solution_class and candidate_classes:
+            solution_class = candidate_classes[0][1]
         
         if not solution_class:
             result.success = False
@@ -820,17 +830,19 @@ class EnhancedTestRunner:
         print(f"{status_color}{result.year} Day {result.day}: {status}{Style.RESET_ALL} {arch_info}")
         
         if result.success:
-            # Part 1 results
-            if result.part1_result is not None:
+            # Part 1 results - always show if we have timing data
+            if result.part1_result is not None or result.part1_metrics.execution_time > 0:
                 validation_symbol = self._get_validation_symbol(result.part1_validation.status)
                 perf_info = self._format_performance_info(result.part1_metrics)
-                print(f"  Part 1: {result.part1_result} {validation_symbol} {perf_info}")
+                result_display = result.part1_result if result.part1_result is not None else "?"
+                print(f"  Part 1: {result_display} {validation_symbol} {perf_info}")
             
-            # Part 2 results
-            if result.part2_result is not None:
+            # Part 2 results - always show if we have timing data
+            if result.part2_result is not None or result.part2_metrics.execution_time > 0:
                 validation_symbol = self._get_validation_symbol(result.part2_validation.status)
                 perf_info = self._format_performance_info(result.part2_metrics)
-                print(f"  Part 2: {result.part2_result} {validation_symbol} {perf_info}")
+                result_display = result.part2_result if result.part2_result is not None else "?"
+                print(f"  Part 2: {result_display} {validation_symbol} {perf_info}")
             
             # Performance warnings
             if result.memory_warnings:
