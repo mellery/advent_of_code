@@ -744,15 +744,30 @@ class EnhancedTestRunner:
         
         return validation
     
+    def _get_performance_category(self, execution_time: float) -> str:
+        """Classify performance into categories."""
+        if execution_time < self.performance_targets["fast"]:
+            return "fast"
+        elif execution_time < self.performance_targets["medium"]:
+            return "medium"
+        elif execution_time < self.performance_targets["slow"]:
+            return "slow"
+        else:
+            return "very_slow"
+    
     def _check_performance_regression(self, result: EnhancedTestResult):
-        """Check for performance regressions."""
+        """Check for performance regressions, but only warn if performance is concerning."""
         if result.part1_metrics.execution_time > 0:
             regression = self.regression_tracker.check_regression(
                 result.year, result.day, "part1", result.part1_metrics.execution_time
             )
             if regression:
                 result.performance_regression = regression
-                result.memory_warnings.append(f"Part 1 performance regression: {regression:.1f}% slower")
+                
+                # Only show regression warning if current performance is slow or very slow
+                performance_category = self._get_performance_category(result.part1_metrics.execution_time)
+                if performance_category in ["slow", "very_slow"]:
+                    result.memory_warnings.append(f"Part 1 performance regression: {regression:.1f}% slower")
             
             # Record current performance
             self.regression_tracker.record_performance(
@@ -766,7 +781,11 @@ class EnhancedTestRunner:
             if regression:
                 if result.performance_regression is None:
                     result.performance_regression = regression
-                result.memory_warnings.append(f"Part 2 performance regression: {regression:.1f}% slower")
+                
+                # Only show regression warning if current performance is slow or very slow
+                performance_category = self._get_performance_category(result.part2_metrics.execution_time)
+                if performance_category in ["slow", "very_slow"]:
+                    result.memory_warnings.append(f"Part 2 performance regression: {regression:.1f}% slower")
             
             # Record current performance
             self.regression_tracker.record_performance(
@@ -952,6 +971,24 @@ class EnhancedTestRunner:
             print(f"Fastest solution: {min(all_times):.3f}s")
             print(f"Slowest solution: {max(all_times):.3f}s")
             
+            # Find and display the slowest solution details
+            slowest_time = max(all_times)
+            slowest_solution = None
+            slowest_part = None
+            
+            for result in self.results:
+                if result.part1_metrics.execution_time == slowest_time:
+                    slowest_solution = f"{result.year} Day {result.day}"
+                    slowest_part = "Part 1"
+                    break
+                elif result.part2_metrics.execution_time == slowest_time:
+                    slowest_solution = f"{result.year} Day {result.day}"
+                    slowest_part = "Part 2"
+                    break
+            
+            if slowest_solution:
+                print(f"🐌 Slowest: {slowest_solution} {slowest_part} ({slowest_time:.3f}s)")
+            
             # Performance categories
             fast_count = sum(1 for t in all_times if t < self.performance_targets["fast"])
             medium_count = sum(1 for t in all_times if self.performance_targets["fast"] <= t < self.performance_targets["medium"])
@@ -973,6 +1010,24 @@ class EnhancedTestRunner:
                 print(f"Solutions monitored: {len(memory_users)}")
                 print(f"Average peak memory: {statistics.mean(memory_peaks):.1f}MB")
                 print(f"Highest memory usage: {max(memory_peaks):.1f}MB")
+                
+                # Find and display the highest memory usage details
+                highest_memory = max(memory_peaks)
+                highest_memory_solution = None
+                highest_memory_part = None
+                
+                for result in memory_users:
+                    if result.part1_metrics.memory_peak == highest_memory:
+                        highest_memory_solution = f"{result.year} Day {result.day}"
+                        highest_memory_part = "Part 1"
+                        break
+                    elif result.part2_metrics.memory_peak == highest_memory:
+                        highest_memory_solution = f"{result.year} Day {result.day}"
+                        highest_memory_part = "Part 2"
+                        break
+                
+                if highest_memory_solution:
+                    print(f"🏔️ Highest memory: {highest_memory_solution} {highest_memory_part} ({highest_memory:.1f}MB)")
         
         # Regression Summary
         regression_count = sum(1 for r in self.results if r.performance_regression)
@@ -994,12 +1049,17 @@ class EnhancedTestRunner:
         print("=" * 80)
     
     def _print_validation_summary(self):
-        """Print validation summary."""
+        """Print validation summary with details about failures."""
         total_validations = 0
         correct = 0
         incorrect = 0
         unknown = 0
         errors = 0
+        
+        # Track specific failures for detailed reporting
+        incorrect_tests = []
+        unknown_tests = []
+        error_tests = []
         
         for result in self.results:
             if result.part1_result is not None:
@@ -1009,10 +1069,13 @@ class EnhancedTestRunner:
                     correct += 1
                 elif status == "FAIL":
                     incorrect += 1
+                    incorrect_tests.append(f"{result.year} Day {result.day} Part 1")
                 elif status == "UNKNOWN":
                     unknown += 1
+                    unknown_tests.append(f"{result.year} Day {result.day} Part 1")
                 else:
                     errors += 1
+                    error_tests.append(f"{result.year} Day {result.day} Part 1")
             
             if result.part2_result is not None:
                 total_validations += 1
@@ -1021,10 +1084,13 @@ class EnhancedTestRunner:
                     correct += 1
                 elif status == "FAIL":
                     incorrect += 1
+                    incorrect_tests.append(f"{result.year} Day {result.day} Part 2")
                 elif status == "UNKNOWN":
                     unknown += 1
+                    unknown_tests.append(f"{result.year} Day {result.day} Part 2")
                 else:
                     errors += 1
+                    error_tests.append(f"{result.year} Day {result.day} Part 2")
         
         if total_validations > 0:
             print(f"\n✅ VALIDATION SUMMARY")
@@ -1037,6 +1103,22 @@ class EnhancedTestRunner:
             if total_validations > 0:
                 accuracy = (correct / total_validations) * 100
                 print(f"Accuracy: {accuracy:.1f}%")
+            
+            # Show detailed failure information
+            if incorrect_tests:
+                print(f"\n{Fore.RED}✗ Incorrect solutions:{Style.RESET_ALL}")
+                for test in sorted(incorrect_tests):
+                    print(f"  {test}")
+            
+            if unknown_tests:
+                print(f"\n{Fore.YELLOW}? Unknown solutions:{Style.RESET_ALL}")
+                for test in sorted(unknown_tests):
+                    print(f"  {test}")
+            
+            if error_tests:
+                print(f"\n{Fore.MAGENTA}! Error solutions:{Style.RESET_ALL}")
+                for test in sorted(error_tests):
+                    print(f"  {test}")
     
     def _print_performance_table(self):
         """Print detailed performance table using tabulate."""
