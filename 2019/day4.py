@@ -40,34 +40,54 @@ class PasswordCriteria:
             raise ValueError("length must be positive")
 
 
+def validate_password_fast(password: int, part2: bool = False) -> bool:
+    """
+    Fast password validation without object overhead.
+    
+    Args:
+        password: Integer password to validate
+        part2: Whether to apply part 2 constraints (exact double requirement)
+        
+    Returns:
+        True if password is valid
+    """
+    # Convert to string once
+    s = str(password)
+    
+    # Check length (should be 6 digits for our range)
+    if len(s) != 6:
+        return False
+    
+    # Check non-decreasing and adjacent digits in one pass
+    has_adjacent = False
+    has_exact_double = False
+    
+    for i in range(5):
+        # Non-decreasing check
+        if s[i] > s[i + 1]:
+            return False
+        
+        # Adjacent same digits check
+        if s[i] == s[i + 1]:
+            has_adjacent = True
+            
+            # For part 2, check if it's exactly a double (not triple+)
+            if part2:
+                # Check if this starts a run of exactly 2
+                if i == 0 or s[i-1] != s[i]:  # Start of run
+                    if i + 1 < 6 and s[i] == s[i+1]:  # Has a match
+                        if i + 2 >= 6 or s[i+1] != s[i+2]:  # Ends after 2
+                            has_exact_double = True
+    
+    return has_adjacent if not part2 else has_exact_double
+
+
 class PasswordValidator:
     """Validates passwords against specified criteria."""
     
     def __init__(self, criteria: PasswordCriteria):
         """Initialize with password criteria."""
         self.criteria = criteria
-    
-    def validate_password(self, password: int) -> Dict[str, bool]:
-        """
-        Validate a password against all criteria.
-        
-        Args:
-            password: Integer password to validate
-            
-        Returns:
-            Dictionary with validation results for each criterion
-        """
-        password_str = str(password)
-        
-        results = {
-            'in_range': self.criteria.min_value <= password <= self.criteria.max_value,
-            'correct_length': len(password_str) == self.criteria.length,
-            'has_adjacent_same': self._has_adjacent_same_digits(password_str),
-            'is_non_decreasing': self._is_non_decreasing(password_str),
-            'has_exact_double': self._has_exact_double(password_str)
-        }
-        
-        return results
     
     def is_valid_password(self, password: int, part2: bool = False) -> bool:
         """
@@ -292,7 +312,7 @@ class Day4Solution(AdventSolution):
     
     def part1(self, input_data: str) -> int:
         """
-        Count passwords meeting Part 1 criteria.
+        Count passwords meeting Part 1 criteria (optimized).
         
         Args:
             input_data: Password range specification
@@ -302,22 +322,17 @@ class Day4Solution(AdventSolution):
         """
         min_val, max_val = self._parse_range(input_data)
         
-        criteria = PasswordCriteria(
-            min_value=min_val,
-            max_value=max_val,
-            require_adjacent_same=True,
-            require_non_decreasing=True
-        )
+        # Fast counting without object overhead
+        count = 0
+        for password in range(min_val, max_val + 1):
+            if validate_password_fast(password, part2=False):
+                count += 1
         
-        validator = PasswordValidator(criteria)
-        analyzer = PasswordAnalyzer(validator)
-        
-        valid_passwords = analyzer.find_valid_passwords(part2=False)
-        return len(valid_passwords)
+        return count
     
     def part2(self, input_data: str) -> int:
         """
-        Count passwords meeting Part 2 criteria (with exact double requirement).
+        Count passwords meeting Part 2 criteria (optimized with exact double requirement).
         
         Args:
             input_data: Password range specification
@@ -327,19 +342,13 @@ class Day4Solution(AdventSolution):
         """
         min_val, max_val = self._parse_range(input_data)
         
-        criteria = PasswordCriteria(
-            min_value=min_val,
-            max_value=max_val,
-            require_adjacent_same=True,
-            require_non_decreasing=True,
-            require_exact_double=True
-        )
+        # Fast counting without object overhead
+        count = 0
+        for password in range(min_val, max_val + 1):
+            if validate_password_fast(password, part2=True):
+                count += 1
         
-        validator = PasswordValidator(criteria)
-        analyzer = PasswordAnalyzer(validator)
-        
-        valid_passwords = analyzer.find_valid_passwords(part2=True)
-        return len(valid_passwords)
+        return count
     
     def analyze_password_range(self, input_data: str) -> None:
         """

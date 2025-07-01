@@ -38,10 +38,8 @@ class Day5Solution(AdventSolution):
         """
         machine = Intcode(program)
         machine.add_input(input_value)
-        machine.start()
-        while not machine.halted:
-            pass
-        return machine.outputs[-1]
+        outputs = machine.run()
+        return outputs[-1]
 
     def part1(self, input_data: str) -> int:
         """

@@ -15,8 +15,8 @@ from typing import Any, List, Dict, Optional, Tuple
 sys.path.append(str(Path(__file__).parent.parent))
 from utils import AdventSolution, InputParser
 
-# Import the Intcode computer
-from intcode import Intcode
+# Import the Intcode computer - now optimized by default
+from intcode import IntcodeOptimized, run_intcode_simple
 
 
 class Day2Solution(AdventSolution):
@@ -37,17 +37,8 @@ class Day2Solution(AdventSolution):
         """
         program = input_data.strip()
         
-        # Replace positions 1 and 2 as specified
-        commands = program.split(',')
-        commands[1] = "12"  # noun
-        commands[2] = "2"   # verb
-        modified_program = ",".join(commands)
-        
-        machine = Intcode(modified_program)
-        machine.start()
-        machine.join()  # Wait for completion
-        
-        return machine.commands[0]
+        # Use optimized function for simple execution
+        return run_intcode_simple(program, noun=12, verb=2)
 
     def part2(self, input_data: str) -> int:
         """
@@ -62,19 +53,11 @@ class Day2Solution(AdventSolution):
         program = input_data.strip()
         target = 19690720
         
+        # Optimized brute force using non-threaded execution
         for noun in range(100):
             for verb in range(100):
-                # Create modified program
-                commands = program.split(',')
-                commands[1] = str(noun)
-                commands[2] = str(verb)
-                modified_program = ",".join(commands)
-                
-                machine = Intcode(modified_program)
-                machine.start()
-                machine.join()  # Wait for completion
-                
-                if machine.commands[0] == target:
+                result = run_intcode_simple(program, noun=noun, verb=verb)
+                if result == target:
                     return 100 * noun + verb
         
         return -1  # Not found
@@ -88,12 +71,11 @@ class Day2Solution(AdventSolution):
         # - Add 30+40=70, store at position 3
         # - Multiply 70*50=3500, store at position 0
         # - Halt
-        machine = Intcode(test_program)
-        machine.start()
-        machine.join()
+        machine = IntcodeOptimized(test_program)
+        result = machine.execute()
         
-        if machine.commands[0] != 3500:
-            print(f"Test failed: expected 3500, got {machine.commands[0]}")
+        if result != 3500:
+            print(f"Test failed: expected 3500, got {result}")
             return False
         
         print("✅ Basic Intcode validation passed!")

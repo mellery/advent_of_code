@@ -15,6 +15,8 @@ import heapq
 # Add utils to path
 sys.path.append(str(Path(__file__).parent.parent))
 from utils import AdventSolution, InputParser
+from utils.algorithms.pathfinding import dijkstra_grid
+from utils.algorithms.grid import Grid
 
 # Try to import NetworkX, but provide fallback
 try:
@@ -52,10 +54,15 @@ class Day15Solution(AdventSolution):
             for c, char in enumerate(line):
                 grid[(r, c)] = int(char)
         
-        if HAS_NETWORKX:
-            return self._solve_with_networkx(grid, rows, cols)
-        else:
-            return self._solve_with_dijkstra(grid, rows, cols)
+        # Try algorithm library first for best performance
+        try:
+            return self._solve_with_algorithm_library(grid, rows, cols)
+        except Exception:
+            # Fallback to other methods
+            if HAS_NETWORKX:
+                return self._solve_with_networkx(grid, rows, cols)
+            else:
+                return self._solve_with_dijkstra(grid, rows, cols)
 
     def part2(self, input_data: str) -> int:
         """
@@ -92,10 +99,15 @@ class Day15Solution(AdventSolution):
         expanded_rows = original_rows * 5
         expanded_cols = original_cols * 5
         
-        if HAS_NETWORKX:
-            return self._solve_with_networkx(expanded_grid, expanded_rows, expanded_cols)
-        else:
-            return self._solve_with_dijkstra(expanded_grid, expanded_rows, expanded_cols)
+        # Try algorithm library first for best performance
+        try:
+            return self._solve_with_algorithm_library(expanded_grid, expanded_rows, expanded_cols)
+        except Exception:
+            # Fallback to other methods
+            if HAS_NETWORKX:
+                return self._solve_with_networkx(expanded_grid, expanded_rows, expanded_cols)
+            else:
+                return self._solve_with_dijkstra(expanded_grid, expanded_rows, expanded_cols)
     
     def _solve_with_networkx(self, grid: Dict[Tuple[int, int], int], rows: int, cols: int) -> int:
         """Solve using NetworkX Dijkstra implementation."""
@@ -117,6 +129,26 @@ class Day15Solution(AdventSolution):
         # Calculate total risk (excluding starting position)
         total_risk = sum(grid[pos] for pos in path[1:])
         return total_risk
+    
+    def _solve_with_algorithm_library(self, grid: Dict[Tuple[int, int], int], rows: int, cols: int) -> int:
+        """Solve using optimized algorithm library."""
+        # Convert dict-based grid to Grid object
+        grid_data = []
+        for r in range(rows):
+            row = []
+            for c in range(cols):
+                row.append(grid[(r, c)])
+            grid_data.append(row)
+        
+        grid_obj = Grid(grid_data)
+        
+        # Use dijkstra_grid from algorithm library
+        result = dijkstra_grid(grid_obj, (0, 0), (rows-1, cols-1))
+        
+        if not result.found:
+            raise RuntimeError("No path found")
+        
+        return int(result.distance)
     
     def _solve_with_dijkstra(self, grid: Dict[Tuple[int, int], int], rows: int, cols: int) -> int:
         """Solve using custom Dijkstra implementation."""

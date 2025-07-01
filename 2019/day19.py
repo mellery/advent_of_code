@@ -14,6 +14,7 @@ import time
 # Add project root to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.advent_base import AdventSolution
+from intcode import IntcodeOptimized
 
 
 @dataclass
@@ -84,88 +85,17 @@ class TractorBeam:
         if (x, y) in self.beam_cache:
             return self.beam_cache[(x, y)]
         
-        # Initialize Intcode execution
-        memory = self.parsed_instructions.copy()
-        memory.extend([0] * 1000)  # Extra memory
+        # Use optimized Intcode implementation
+        machine = IntcodeOptimized(self.program)
+        machine.add_input(x)
+        machine.add_input(y)
         
-        pc = 0
-        relative_base = 0
-        inputs = [x, y]
-        input_idx = 0
+        outputs = machine.run()
+        result = outputs[0] if outputs else 0
         
-        def get_param(mode: int, param: int) -> int:
-            if mode == 0:  # position
-                return memory[param] if param < len(memory) else 0
-            elif mode == 1:  # immediate
-                return param
-            elif mode == 2:  # relative
-                return memory[relative_base + param] if relative_base + param < len(memory) else 0
-            return 0
-        
-        def set_param(mode: int, param: int, value: int) -> None:
-            if mode == 0:  # position
-                if param < len(memory):
-                    memory[param] = value
-            elif mode == 2:  # relative
-                if relative_base + param < len(memory):
-                    memory[relative_base + param] = value
-        
-        while pc < len(memory):
-            instruction = memory[pc]
-            opcode = instruction % 100
-            mode1 = (instruction // 100) % 10
-            mode2 = (instruction // 1000) % 10
-            mode3 = (instruction // 10000) % 10
-            
-            if opcode == 99:  # halt
-                break
-            elif opcode == 1:  # add
-                val1 = get_param(mode1, memory[pc + 1])
-                val2 = get_param(mode2, memory[pc + 2])
-                set_param(mode3, memory[pc + 3], val1 + val2)
-                pc += 4
-            elif opcode == 2:  # multiply
-                val1 = get_param(mode1, memory[pc + 1])
-                val2 = get_param(mode2, memory[pc + 2])
-                set_param(mode3, memory[pc + 3], val1 * val2)
-                pc += 4
-            elif opcode == 3:  # input
-                if input_idx < len(inputs):
-                    set_param(mode1, memory[pc + 1], inputs[input_idx])
-                    input_idx += 1
-                pc += 2
-            elif opcode == 4:  # output
-                val = get_param(mode1, memory[pc + 1])
-                self.beam_cache[(x, y)] = val
-                return val
-            elif opcode == 5:  # jump if true
-                val1 = get_param(mode1, memory[pc + 1])
-                val2 = get_param(mode2, memory[pc + 2])
-                pc = val2 if val1 != 0 else pc + 3
-            elif opcode == 6:  # jump if false
-                val1 = get_param(mode1, memory[pc + 1])
-                val2 = get_param(mode2, memory[pc + 2])
-                pc = val2 if val1 == 0 else pc + 3
-            elif opcode == 7:  # less than
-                val1 = get_param(mode1, memory[pc + 1])
-                val2 = get_param(mode2, memory[pc + 2])
-                set_param(mode3, memory[pc + 3], 1 if val1 < val2 else 0)
-                pc += 4
-            elif opcode == 8:  # equals
-                val1 = get_param(mode1, memory[pc + 1])
-                val2 = get_param(mode2, memory[pc + 2])
-                set_param(mode3, memory[pc + 3], 1 if val1 == val2 else 0)
-                pc += 4
-            elif opcode == 9:  # adjust relative base
-                val = get_param(mode1, memory[pc + 1])
-                relative_base += val
-                pc += 2
-            else:
-                break
-        
-        # If we get here without output, assume 0
-        self.beam_cache[(x, y)] = 0
-        return 0
+        # Cache the result
+        self.beam_cache[(x, y)] = result
+        return result
     
     def check_point(self, point: Point) -> bool:
         """
