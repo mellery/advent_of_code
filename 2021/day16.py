@@ -1,105 +1,247 @@
-class bits:
-    command = ""
-    packet_version = 0
-    type_id = 0
-    value = 0
+#!/usr/bin/env python3
+"""
+Advent of Code 2021 - Day 16: Packet Decoder
 
-    length_type_id = 0
-    total_length_of_bits = 0
-    number_of_sub_packets = 0
-    data = ""
-    parsed = 0
-    sub_packets = []
+Decoding nested packets from a binary transmission.
+"""
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from utils import (
+    get_lines, setup_day_args, find_input_file, validate_solution, run_solution
+)
+from utils.advent_base import AdventSolution
+from typing import Any, List, Tuple
+import operator
 
 
-    def __init__(self, command=""):
-        self.command = command
-        self.packet_version = int(self.command[0:3],2)
-        self.type_id = int(self.command[3:6],2)
-
-        if self.type_id == 4: #literal value
-            temp = ""
-            i = 6
-            while i < len(command):
-                more = int(self.command[i])
-                a = self.command[i+1:i+5]
-                temp += a
-                if more == 0:
-                    self.parsed = i+5
-                    break
-                i+=5
+class Packet:
+    """Represents a BITS packet with version, type ID, and value or sub-packets."""
+    
+    def __init__(self, binary_data: str, start: int = 0):
+        self.version = int(binary_data[start:start+3], 2)
+        self.type_id = int(binary_data[start+3:start+6], 2)
+        self.sub_packets = []
+        self.value = 0
+        self.length = 0  # Total bits consumed by this packet
+        
+        if self.type_id == 4:  # Literal value
+            self._parse_literal(binary_data, start + 6)
+        else:  # Operator packet
+            self._parse_operator(binary_data, start + 6)
+    
+    def _parse_literal(self, binary_data: str, start: int):
+        """Parse a literal value packet."""
+        value_bits = ""
+        pos = start
+        
+        while pos < len(binary_data):
+            group = binary_data[pos:pos+5]
+            if len(group) < 5:
+                break
                 
-            #print(temp)
-            self.value = int(temp,2)
+            value_bits += group[1:5]  # Skip the first bit (continuation bit)
+            pos += 5
+            
+            if group[0] == '0':  # Last group
+                break
         
-        else: #operator packet
-            self.length_type_id = int(self.command[6])
-            if self.length_type_id == 0:
-                self.total_length_of_bits = int(self.command[7:7+15],2)
-                self.data = self.command[7+15:7+15+self.total_length_of_bits]
-                bits_parsed = 0
-                if self.total_length_of_bits > 0:
-                    s = parsePacket(self.data)
-                    self.sub_packets.append(s)
-                    bits_parsed += s.parsed
-                    while bits_parsed < self.total_length_of_bits:
-                        s = parsePacket(s.command[s.parsed:])
-                        self.sub_packets.append(s)
-                        bits_parsed += s.parsed
-                    
-                    #print("left",len(s.command[s.parsed:]))
-                    
-                        
-            else:
-                self.number_of_sub_packets = int(self.command[7:7+11],2)
-                self.data = self.command[7+11:]
-                bits_parsed = 0
-                if self.number_of_sub_packets > 0:
-                    s = parsePacket(self.data)
-                    self.sub_packets.append(s)
-                    bits_parsed += s.parsed
-                    while len(s.sub_packets) < self.number_of_sub_packets:
-                        s = parsePacket(s.command[s.parsed:])
-                        self.sub_packets.append(s)
-                        bits_parsed += s.parsed
-
-               
-    def __str__(self):
-        #return f"{self.command}\nPacket ver:\t{self.packet_version}\nType ID:\t{self.type_id}\nValue:\t\t{self.value}\nlength id:\t{self.length_type_id}\ntotal length of bits {self.total_length_of_bits}\nNumber of subpackets: {self.number_of_sub_packets}\ndata: {self.data}"
-        return f"{self.command}\nPacket ver:\t{self.packet_version}\nType ID:\t{self.type_id}\nValue:\t\t{self.value}\n"
-
-def hex2bin(input):
-    hsize = len(input)*4
-    return((bin(int(input,16))[2:]).zfill(hsize))
-
-def parsePacket(input):
-    return bits(input)
-
-def part1(input):
+        self.value = int(value_bits, 2) if value_bits else 0
+        self.length = pos - start + 6  # Include header (6 bits)
     
-    b = parsePacket(hex2bin(input))
-    print(b)
-    print("---------")
-    total = b.packet_version
-    x = 1
-    for s in b.sub_packets:
-        #print("SUB_PACKET",x)
-        x += 1
-        #print(s)
+    def _parse_operator(self, binary_data: str, start: int):
+        """Parse an operator packet."""
+        length_type_id = binary_data[start]
+        pos = start + 1
         
-    print("total",total)
-    #left_to_parse = b.total_length_of_bits
-    #if left_to_parse > 0:
-    #    temp = parsePacket(b.data)
-    #    print(temp)
+        if length_type_id == '0':  # Next 15 bits are total length of sub-packets
+            sub_packet_length = int(binary_data[pos:pos+15], 2)
+            pos += 15
+            
+            sub_packets_data = binary_data[pos:pos+sub_packet_length]
+            sub_pos = 0
+            
+            while sub_pos < len(sub_packets_data):
+                try:
+                    packet = Packet(sub_packets_data, sub_pos)
+                    if packet.length == 0:  # Invalid packet
+                        break
+                    self.sub_packets.append(packet)
+                    sub_pos += packet.length
+                except (ValueError, IndexError):
+                    break
+            
+            self.length = pos + sub_packet_length - start + 6
+            
+        else:  # Next 11 bits are number of sub-packets
+            num_sub_packets = int(binary_data[pos:pos+11], 2)
+            pos += 11
+            
+            for _ in range(num_sub_packets):
+                try:
+                    packet = Packet(binary_data, pos)
+                    if packet.length == 0:  # Invalid packet
+                        break
+                    self.sub_packets.append(packet)
+                    pos += packet.length
+                except (ValueError, IndexError):
+                    break
+            
+            self.length = pos - start + 6
+        
+        # Calculate the value based on type ID
+        self._calculate_value()
     
+    def _calculate_value(self):
+        """Calculate the value of an operator packet based on its type ID."""
+        if not self.sub_packets:
+            self.value = 0
+            return
+        
+        sub_values = [packet.get_value() for packet in self.sub_packets]
+        
+        if self.type_id == 0:  # Sum
+            self.value = sum(sub_values)
+        elif self.type_id == 1:  # Product
+            self.value = 1
+            for val in sub_values:
+                self.value *= val
+        elif self.type_id == 2:  # Minimum
+            self.value = min(sub_values)
+        elif self.type_id == 3:  # Maximum
+            self.value = max(sub_values)
+        elif self.type_id == 5:  # Greater than
+            self.value = 1 if sub_values[0] > sub_values[1] else 0
+        elif self.type_id == 6:  # Less than
+            self.value = 1 if sub_values[0] < sub_values[1] else 0
+        elif self.type_id == 7:  # Equal to
+            self.value = 1 if sub_values[0] == sub_values[1] else 0
+    
+    def get_version_sum(self) -> int:
+        """Get the sum of version numbers for this packet and all sub-packets."""
+        total = self.version
+        for packet in self.sub_packets:
+            total += packet.get_version_sum()
+        return total
+    
+    def get_value(self) -> int:
+        """Get the calculated value of this packet."""
+        return self.value
 
 
-part1("D2FE28") #6
-#part1("38006F45291200")
-#part1("EE00D40C823060")
-#part1("8A004A801A8002F478") #16 good
-#part1("620080001611562C8802118E34") #12 #wrong answer
-#part1("C0015000016115A2E0802F182340") #23 #runs forever
-#part1("A0016C880162017C3686B18A3D4780") #31 #runs forever
-#part1("420D598021E0084A07C98EC91DCAE0B880287912A925799429825980593D7DCD400820329480BF21003CC0086028910097520230C80813401D8CC00F601881805705003CC00E200E98400F50031801D160048E5AFEFD5E5C02B93F2F4C11CADBBB799CB294C5FDB8E12C40139B7C98AFA8B2600DCBAF4D3A4C27CB54EA6F5390B1004B93E2F40097CA2ECF70C1001F296EF9A647F5BFC48C012C0090E675DF644A675DF645A7E6FE600BE004872B1B4AAB5273ED601D2CD240145F802F2CFD31EFBD4D64DD802738333992F9FFE69CAF088C010E0040A5CC65CD25774830A80372F9D78FA4F56CB6CDDC148034E9B8D2F189FD002AF3918AECD23100953600900021D1863142400043214C668CB31F073005A6E467600BCB1F4B1D2805930092F99C69C6292409CE6C4A4F530F100365E8CC600ACCDB75F8A50025F2361C9D248EF25B662014870035600042A1DC77890200D41086B0FE4E918D82CC015C00DCC0010F8FF112358002150DE194529E9F7B9EE064C015B005C401B8470F60C080371460CC469BA7091802F39BE6252858720AC2098B596D40208A53CBF3594092FF7B41B3004A5DB25C864A37EF82C401C9BCFE94B7EBE2D961892E0C1006A32C4160094CDF53E1E4CDF53E1D8005FD3B8B7642D3B4EB9C4D819194C0159F1ED00526B38ACF6D73915F3005EC0179C359E129EFDEFEEF1950005988E001C9C799ABCE39588BB2DA86EB9ACA22840191C8DFBE1DC005EE55167EFF89510010B322925A7F85A40194680252885238D7374C457A6830C012965AE00D4C40188B306E3580021319239C2298C4ED288A1802B1AF001A298FD53E63F54B7004A68B25A94BEBAAA00276980330CE0942620042E3944289A600DC388351BDC00C9DCDCFC8050E00043E2AC788EE200EC2088919C0010A82F0922710040F289B28E524632AE0") #63 is wrong
+def hex_to_binary(hex_string: str) -> str:
+    """Convert hexadecimal string to binary string."""
+    # Remove any whitespace and convert to uppercase
+    hex_string = hex_string.strip().upper()
+    
+    # Convert each hex digit to 4-bit binary
+    binary = ""
+    for hex_digit in hex_string:
+        if hex_digit in "0123456789ABCDEF":
+            binary += format(int(hex_digit, 16), '04b')
+    
+    return binary
+
+
+def parse_transmission(hex_input: str) -> Packet:
+    """Parse a hexadecimal transmission into a packet."""
+    binary_data = hex_to_binary(hex_input)
+    return Packet(binary_data)
+
+
+class Day16Solution(AdventSolution):
+    """Day 16: Packet Decoder"""
+    
+    def __init__(self):
+        super().__init__(2021, 16, "Packet Decoder")
+    
+    def part1(self, filename: str) -> Any:
+        """
+        Sum the version numbers in all packets.
+        
+        Args:
+            filename: Path to the input file
+            
+        Returns:
+            Sum of all version numbers in the transmission
+        """
+        lines = get_lines(filename)
+        hex_input = lines[0].strip()
+        
+        packet = parse_transmission(hex_input)
+        return packet.get_version_sum()
+    
+    def part2(self, filename: str) -> Any:
+        """
+        Evaluate the expression represented by the packet hierarchy.
+        
+        Args:
+            filename: Path to the input file
+            
+        Returns:
+            The value calculated by evaluating the outermost packet
+        """
+        lines = get_lines(filename)
+        hex_input = lines[0].strip()
+        
+        packet = parse_transmission(hex_input)
+        return packet.get_value()
+
+
+# Legacy functions for backward compatibility
+def part1(filename: str) -> Any:
+    """Legacy function for part 1."""
+    solution = Day16Solution()
+    return solution.part1(filename)
+
+
+def part2(filename: str) -> Any:
+    """Legacy function for part 2."""
+    solution = Day16Solution()
+    return solution.part2(filename)
+
+
+def main():
+    """Main function to run the solution."""
+    solution = Day16Solution()
+    
+    # Check if we're being called by the legacy test runner
+    if len(sys.argv) > 1 and '--legacy' in sys.argv:
+        # Legacy mode - use the old approach
+        day = '16'
+        args = setup_day_args(day)
+        
+        # Determine input file
+        if args.use_test:
+            input_file = args.test
+        else:
+            input_file = find_input_file(day) or args.input
+        
+        if not os.path.exists(input_file):
+            print(f"Error: Input file '{input_file}' not found")
+            return
+        
+        print(f"Advent of Code 2021 - Day {day}")
+        print(f"Using input file: {input_file}")
+        print("-" * 40)
+        
+        # Run validation if test file exists
+        test_file = args.test
+        if os.path.exists(test_file) and not args.use_test:
+            print("Running validation tests...")
+            # Note: Test values would need to be determined from actual test cases
+            validate_solution(part1, part2, test_file, 
+                            expected_part1=None, expected_part2=None)
+            print("-" * 40)
+        
+        # Run the actual solution
+        run_solution(part1, part2, input_file, args)
+    else:
+        # Enhanced mode - use AdventSolution
+        solution.run()
+
+
+if __name__ == "__main__":
+    main()
