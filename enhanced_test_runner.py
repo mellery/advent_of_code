@@ -968,6 +968,15 @@ class EnhancedTestRunner:
         print(f"Legacy solutions: {legacy_count}")
         print(f"Solutions with validation: {validation_count}")
         
+        # Show solutions without validation
+        solutions_without_validation = self._get_solutions_without_validation()
+        if solutions_without_validation:
+            print(f"{Fore.YELLOW}Solutions without validation:{Style.RESET_ALL}")
+            for year, day in solutions_without_validation:
+                print(f"  {year} Day {day}")
+        elif len(solutions_without_validation) == 0:
+            print(f"{Fore.GREEN}All solutions have validation setup{Style.RESET_ALL}")
+        
         # Performance Summary
         if all_times:
             print(f"\n⚡ PERFORMANCE ANALYSIS")
@@ -1124,6 +1133,45 @@ class EnhancedTestRunner:
                 print(f"\n{Fore.MAGENTA}! Error solutions:{Style.RESET_ALL}")
                 for test in sorted(error_tests):
                     print(f"  {test}")
+    
+    def _get_solutions_with_validation(self) -> List[Tuple[str, str]]:
+        """Get list of problems (year, day) that have validation for at least one part."""
+        solutions_with_validation = []
+        seen_problems = set()
+        
+        for result in self.results:
+            if result.success:
+                problem_key = (result.year, result.day)
+                if problem_key not in seen_problems:
+                    # Check if this problem has any validation
+                    has_part1_validation = (result.part1_result is not None and 
+                                          result.part1_validation.status != "UNKNOWN")
+                    has_part2_validation = (result.part2_result is not None and 
+                                          result.part2_validation.status != "UNKNOWN")
+                    
+                    if has_part1_validation or has_part2_validation:
+                        solutions_with_validation.append(problem_key)
+                    
+                    seen_problems.add(problem_key)
+        
+        return sorted(solutions_with_validation)
+
+    def _get_solutions_without_validation(self) -> List[Tuple[str, str]]:
+        """Get list of problems (year, day) that don't have validation methods in their AdventSolution class."""
+        solutions_without_validation = []
+        seen_problems = set()
+        
+        for result in self.results:
+            if result.success:
+                problem_key = (result.year, result.day)
+                if problem_key not in seen_problems:
+                    # Check if this solution has validation method implemented
+                    if not result.solution_type.has_validation:
+                        solutions_without_validation.append(problem_key)
+                    
+                    seen_problems.add(problem_key)
+        
+        return sorted(solutions_without_validation)
     
     def _print_performance_table(self):
         """Print detailed performance table using tabulate."""
