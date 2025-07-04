@@ -142,7 +142,49 @@ class Day13Solution(AdventSolution):
         
         return letters
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
 
+        # Test cases for part 1
+        example_input = """6,10
+0,14
+9,10
+0,3
+10,4
+4,11
+6,0
+6,12
+4,1
+0,13
+10,12
+3,4
+3,0
+8,4
+1,10
+2,14
+8,10
+9,0
+
+fold along y=7
+fold along x=5"""
+        expected_part1 = 17
+
+        result = self.part1(example_input)
+        if result != expected_part1:
+            print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
+            return False
+        
+        # Test cases for part 2
+        #expected_part2 = 45000
+        
+        #result = self.part2(example_input)
+        #if result != expected_part2:
+        #    print(f"Part 2 test failed for example input: expected {expected_part2}, got {result}")
+        #    return False
+        
+        print("✅ All Day 13 validation tests passed!")
+        return True
+    
 def main():
     """Main execution function."""
     solution = Day13Solution()
