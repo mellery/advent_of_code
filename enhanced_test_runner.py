@@ -976,29 +976,6 @@ class EnhancedTestRunner:
         print(f"{Fore.GREEN}✓ Successful: {passed}{Style.RESET_ALL}")
         print(f"{Fore.RED}✗ Failed: {failed}{Style.RESET_ALL}")
         
-        # Validation Health - show specific issues
-        validation_analysis = self._get_validation_analysis()
-        failing_count = len(validation_analysis['failing_validation'])
-        missing_count = len(validation_analysis['missing_validation'])
-        
-        if missing_count > 0 or failing_count > 0:
-            print(f"\n📊 VALIDATION HEALTH:")
-            
-            # Show solutions without validation methods
-            if validation_analysis['missing_validation']:
-                print(f"{Fore.YELLOW}Solutions without validation methods:{Style.RESET_ALL}")
-                for year, day in validation_analysis['missing_validation']:
-                    print(f"  {year} Day {day}")
-            
-            # Show solutions with failing validation
-            if validation_analysis['failing_validation']:
-                print(f"{Fore.RED}Solutions with failing validation:{Style.RESET_ALL}")
-                for year, day in validation_analysis['failing_validation']:
-                    print(f"  {year} Day {day}")
-        else:
-            print(f"\n📊 VALIDATION HEALTH:")
-            print(f"{Fore.GREEN}✅ All solutions have working validation{Style.RESET_ALL}")
-        
         # Performance Summary
         if all_times:
             print(f"\n⚡ PERFORMANCE ANALYSIS")
@@ -1073,6 +1050,29 @@ class EnhancedTestRunner:
             for r in self.results:
                 if r.performance_regression:
                     print(f"   {r.year} Day {r.day}: {r.performance_regression:.1f}% slower")
+        
+        # Validation Health - show specific issues
+        validation_analysis = self._get_validation_analysis()
+        failing_count = len(validation_analysis['failing_validation'])
+        missing_count = len(validation_analysis['missing_validation'])
+        
+        if missing_count > 0 or failing_count > 0:
+            print(f"\n📊 VALIDATION HEALTH:")
+            
+            # Show solutions without validation methods
+            if validation_analysis['missing_validation']:
+                print(f"{Fore.YELLOW}Solutions without validation methods:{Style.RESET_ALL}")
+                for year, day in validation_analysis['missing_validation']:
+                    print(f"  {year} Day {day}")
+            
+            # Show solutions with failing validation
+            if validation_analysis['failing_validation']:
+                print(f"{Fore.RED}Solutions with failing validation:{Style.RESET_ALL}")
+                for year, day in validation_analysis['failing_validation']:
+                    print(f"  {year} Day {day}")
+        else:
+            print(f"\n📊 VALIDATION HEALTH:")
+            print(f"{Fore.GREEN}✅ All solutions have working validation{Style.RESET_ALL}")
         
         # Validation Summary
         self._print_validation_summary()
