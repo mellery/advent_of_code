@@ -72,13 +72,14 @@ class Day2Solution(AdventSolution):
         # - Multiply 70*50=3500, store at position 0
         # - Halt
         machine = IntcodeOptimized(test_program)
-        result = machine.execute()
+        machine.run()
+        result = machine.commands[0]  # Get value at position 0
         
         if result != 3500:
             print(f"Test failed: expected 3500, got {result}")
             return False
-        
-        print("✅ Basic Intcode validation passed!")
+
+        print("✅  All Day 2 validation tests passed!")
         return True
 
 
