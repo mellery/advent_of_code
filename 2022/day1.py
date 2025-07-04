@@ -81,7 +81,41 @@ class Day1Solution(AdventSolution):
         elf_calories.sort(reverse=True)
         return sum(elf_calories[:3])
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
 
+        # Test cases for part 1
+        example_input = """1000
+2000
+3000
+
+4000
+
+5000
+6000
+
+7000
+8000
+9000
+
+10000"""
+        expected_part1 = 24000
+        
+        result = self.part1(example_input)
+        if result != expected_part1:
+            print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
+            return False
+        
+        # Test cases for part 2
+        expected_part2 = 45000
+        
+        result = self.part2(example_input)
+        if result != expected_part2:
+            print(f"Part 2 test failed for example input: expected {expected_part2}, got {result}")
+            return False
+        
+        print("✅ All Day 1 validation tests passed!")
+        return True
 
 def main():
     """Main execution function."""

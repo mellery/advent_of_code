@@ -107,36 +107,33 @@ class Day1Solution(AdventSolution):
         
         return total
 
-
-def validate(self, expected_part1=None, expected_part2=None) -> bool:
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
         """Validate solution with test cases."""
 
         # Test cases for part 1
-        example_input = """1000
-        2000
-        3000
-
-        4000
-
-        5000
-        6000
-
-        7000
-        8000
-        9000
-
-        10000"""
-        expected_part1 = 24000
+        example_input1 = """1abc2
+pqr3stu8vwx
+a1b2c3d4e5f
+treb7uchet"""
+        expected_part1 = 142
         
-        result = self.part1(example_input)
+        result = self.part1(example_input1)
         if result != expected_part1:
             print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
             return False
         
         # Test cases for part 2
-        expected_part2 = 45000
+        example_input2 = """two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen"""
         
-        result = self.part2(example_input)
+        expected_part2 = 281
+        
+        result = self.part2(example_input2)
         if result != expected_part2:
             print(f"Part 2 test failed for example input: expected {expected_part2}, got {result}")
             return False
