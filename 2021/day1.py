@@ -48,7 +48,37 @@ class Day1Solution(AdventSolution):
             last_number = nsum
         return increases
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
 
+        # Test cases for part 1
+        example_input = """199
+200
+208
+210
+200
+207
+240
+269
+260
+263"""
+        expected_part1 = 7
+        
+        result = self.part1(example_input)
+        if result != expected_part1:
+            print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
+            return False
+        
+        # Test cases for part 2
+        expected_part2 = 5
+        
+        result = self.part2(example_input)
+        if result != expected_part2:
+            print(f"Part 2 test failed for example input: expected {expected_part2}, got {result}")
+            return False
+        
+        print("✅ All Day 1 validation tests passed!")
+        return True
 
 def main():
     """Main execution function."""

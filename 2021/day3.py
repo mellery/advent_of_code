@@ -79,7 +79,39 @@ class Day3Solution(AdventSolution):
         
         return oxygen_int * co2_int
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
 
+        # Test cases for part 1
+        example_input = """00100
+11110
+10110
+10111
+10101
+01111
+00111
+11100
+10000
+11001
+00010
+01010"""
+        expected_part1 = 198
+        
+        result = self.part1(example_input)
+        if result != expected_part1:
+            print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
+            return False
+        
+        # Test cases for part 2
+        expected_part2 = 230
+        
+        result = self.part2(example_input)
+        if result != expected_part2:
+            print(f"Part 2 test failed for example input: expected {expected_part2}, got {result}")
+            return False
+
+        print("✅ All Day 3 validation tests passed!")
+        return True
 
 def main():
     """Main execution function."""
