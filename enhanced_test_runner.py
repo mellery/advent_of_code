@@ -627,8 +627,22 @@ class EnhancedTestRunner:
                     validation_passed = solution_instance.validate()
                     if not validation_passed:
                         result.error = "Solution validation failed"
+                        # Mark validation as failed for both parts if validation method fails
+                        if result.part1_result is not None:
+                            result.part1_validation.status = "FAIL"
+                            result.part1_validation.error_message = "Internal validation failed"
+                        if result.part2_result is not None:
+                            result.part2_validation.status = "FAIL"
+                            result.part2_validation.error_message = "Internal validation failed"
                 except Exception as e:
                     result.error = f"Validation error: {e}"
+                    # Mark validation as error for both parts if validation method crashes
+                    if result.part1_result is not None:
+                        result.part1_validation.status = "ERROR"
+                        result.part1_validation.error_message = str(e)
+                    if result.part2_result is not None:
+                        result.part2_validation.status = "ERROR"
+                        result.part2_validation.error_message = str(e)
             
         except Exception as e:
             # Enhanced execution failed, try legacy compatibility functions
@@ -962,20 +976,28 @@ class EnhancedTestRunner:
         print(f"{Fore.GREEN}✓ Successful: {passed}{Style.RESET_ALL}")
         print(f"{Fore.RED}✗ Failed: {failed}{Style.RESET_ALL}")
         
-        # Architecture Summary
-        print(f"\n🏗️  ARCHITECTURE ANALYSIS")
-        print(f"Enhanced solutions: {enhanced_count}")
-        print(f"Legacy solutions: {legacy_count}")
-        print(f"Solutions with validation: {validation_count}")
+        # Validation Health - show specific issues
+        validation_analysis = self._get_validation_analysis()
+        failing_count = len(validation_analysis['failing_validation'])
+        missing_count = len(validation_analysis['missing_validation'])
         
-        # Show solutions without validation
-        solutions_without_validation = self._get_solutions_without_validation()
-        if solutions_without_validation:
-            print(f"{Fore.YELLOW}Solutions without validation:{Style.RESET_ALL}")
-            for year, day in solutions_without_validation:
-                print(f"  {year} Day {day}")
-        elif len(solutions_without_validation) == 0:
-            print(f"{Fore.GREEN}All solutions have validation setup{Style.RESET_ALL}")
+        if missing_count > 0 or failing_count > 0:
+            print(f"\n📊 VALIDATION HEALTH:")
+            
+            # Show solutions without validation methods
+            if validation_analysis['missing_validation']:
+                print(f"{Fore.YELLOW}Solutions without validation methods:{Style.RESET_ALL}")
+                for year, day in validation_analysis['missing_validation']:
+                    print(f"  {year} Day {day}")
+            
+            # Show solutions with failing validation
+            if validation_analysis['failing_validation']:
+                print(f"{Fore.RED}Solutions with failing validation:{Style.RESET_ALL}")
+                for year, day in validation_analysis['failing_validation']:
+                    print(f"  {year} Day {day}")
+        else:
+            print(f"\n📊 VALIDATION HEALTH:")
+            print(f"{Fore.GREEN}✅ All solutions have working validation{Style.RESET_ALL}")
         
         # Performance Summary
         if all_times:
@@ -1107,8 +1129,8 @@ class EnhancedTestRunner:
                     error_tests.append(f"{result.year} Day {result.day} Part 2")
         
         if total_validations > 0:
-            print(f"\n✅ VALIDATION SUMMARY")
-            print(f"Total validations: {total_validations}")
+            print(f"\n✅ SOLUTION SUMMARY")
+            print(f"Total solutions: {total_validations}")
             print(f"{Fore.GREEN}✓ Correct: {correct}{Style.RESET_ALL}")
             print(f"{Fore.RED}✗ Incorrect: {incorrect}{Style.RESET_ALL}")
             print(f"{Fore.YELLOW}? Unknown: {unknown}{Style.RESET_ALL}")
@@ -1172,6 +1194,54 @@ class EnhancedTestRunner:
                     seen_problems.add(problem_key)
         
         return sorted(solutions_without_validation)
+    
+    def _get_validation_analysis(self) -> Dict[str, List[Tuple[str, str]]]:
+        """
+        Analyze validation status across all solutions.
+        
+        Returns:
+            Dictionary with 'missing_validation' and 'failing_validation' lists
+        """
+        missing_validation = []
+        failing_validation = []
+        seen_problems = set()
+        
+        for result in self.results:
+            if result.success:
+                problem_key = (result.year, result.day)
+                if problem_key not in seen_problems:
+                    # Check if solution has validation method
+                    if not result.solution_type.has_validation:
+                        missing_validation.append(problem_key)
+                    else:
+                        # Check if validation actually passes
+                        # A solution has failing validation if it has validation method but
+                        # the validation results show failures
+                        has_validation_failure = False
+                        
+                        # Check part 1 validation
+                        if (result.part1_result is not None and 
+                            result.part1_validation.status in ["FAIL", "ERROR"]):
+                            has_validation_failure = True
+                        
+                        # Check part 2 validation  
+                        if (result.part2_result is not None and 
+                            result.part2_validation.status in ["FAIL", "ERROR"]):
+                            has_validation_failure = True
+                        
+                        # Also check if validation method itself failed during execution
+                        if "validation failed" in result.error.lower():
+                            has_validation_failure = True
+                        
+                        if has_validation_failure:
+                            failing_validation.append(problem_key)
+                    
+                    seen_problems.add(problem_key)
+        
+        return {
+            'missing_validation': sorted(missing_validation),
+            'failing_validation': sorted(failing_validation)
+        }
     
     def _print_performance_table(self):
         """Print detailed performance table using tabulate."""

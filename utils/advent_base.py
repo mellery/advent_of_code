@@ -239,6 +239,9 @@ class AdventSolution(ABC):
         """
         Validate solution against expected results using test input.
         
+        Solutions should override this method to provide internal  
+        validation with hardcoded test cases.
+        
         Args:
             expected_part1: Expected result for part 1
             expected_part2: Expected result for part 2
@@ -246,31 +249,9 @@ class AdventSolution(ABC):
         Returns:
             True if all validations pass
         """
-        if self.test_file is None:
-            print("No test file available for validation")
-            return False
+        print("❌ VALIDATION FAILURE: validate() method must be overridden in solution class")
+        return False
         
-        print(f"Validating {self.year} Day {self.day}...")
-        
-        # Run with test input
-        test_results = self.run(use_test=True)
-        success = True
-        
-        if expected_part1 is not None and 'part1' in test_results:
-            if test_results['part1'] == expected_part1:
-                print(f"✅ Part 1: {test_results['part1']} (correct)")
-            else:
-                print(f"❌ Part 1: expected {expected_part1}, got {test_results['part1']}")
-                success = False
-        
-        if expected_part2 is not None and 'part2' in test_results:
-            if test_results['part2'] == expected_part2:
-                print(f"✅ Part 2: {test_results['part2']} (correct)")
-            else:
-                print(f"❌ Part 2: expected {expected_part2}, got {test_results['part2']}")
-                success = False
-        
-        return success
     
     def benchmark(self, iterations: int = 5) -> Dict[str, float]:
         """
