@@ -236,7 +236,7 @@ class JupiterSystem:
                     current_state = self._capture_axis_state(axis)
                     if current_state == self.axis_initial_states[axis]:
                         self.axis_periods[axis] = step
-                        print(f"Axis {axis} cycle found: {step} steps")
+                        #print(f"Axis {axis} cycle found: {step} steps")
         
         # Calculate LCM of all axis periods
         periods = list(self.axis_periods.values())
@@ -328,7 +328,7 @@ class Day12Solution(AdventSolution):
         
         return moons
     
-    def part1(self, input_data: str) -> int:
+    def part1(self, input_data: str, steps=1000) -> int:
         """
         Calculate total energy after 1000 simulation steps.
         
@@ -340,7 +340,7 @@ class Day12Solution(AdventSolution):
         """
         moon_data = self._parse_moon_positions(input_data)
         system = JupiterSystem(moon_data)
-        system.simulate_steps(1000)
+        system.simulate_steps(steps)
         return system.total_energy()
     
     def part2(self, input_data: str) -> int:
@@ -403,7 +403,32 @@ class Day12Solution(AdventSolution):
             for axis, period in final_analysis['axis_periods'].items():
                 print(f"  {axis.upper()}-axis: {period:,} steps")
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
 
+        # Test cases for part 1
+        example_input = """<x=-8, y=-10, z=0>
+<x=5, y=5, z=10>
+<x=2, y=-7, z=3>
+<x=9, y=-8, z=-3>"""
+        expected_part1 = 1940
+        
+        result = self.part1(example_input, steps=100)
+        if result != expected_part1:
+            print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
+            return False
+        
+        # Test cases for part 2
+        expected_part2 = 4686774924
+        
+        result = self.part2(example_input)
+        if result != expected_part2:
+            print(f"Part 2 test failed for example input: expected {expected_part2}, got {result}")
+            return False
+        
+        print("✅ All Day 12 validation tests passed!")
+        return True
+    
 def main():
     """Main execution function."""
     solution = Day12Solution()

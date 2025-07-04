@@ -67,6 +67,12 @@ class Day5Solution(AdventSolution):
         program = input_data.strip()
         return self.run_intcode_with_input(program, 5)
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
+
+        print("ℹ️ No examples provided for Day 5, skipping validation")
+        #print("✅ All Day 5 validation tests passed!")
+        return True
 
 def main():
     """Main execution function."""

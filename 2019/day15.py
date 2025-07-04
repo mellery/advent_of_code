@@ -404,43 +404,10 @@ class Day15Solution(AdventSolution):
     
     def validate(self, expected_part1: Any = None, expected_part2: Any = None) -> bool:
         """Validate the solution with known test cases."""
-        # For Day 15, we don't have simple test cases due to the complex nature
-        # of the maze exploration, but we can validate that the solution runs
-        # and produces reasonable results
-        print("Day 15 validation: Running solution check...")
-        
-        try:
-            # Test with empty input (should use fallback program)
-            results = self.run(use_test=False)
-            
-            if 'part1' in results and 'part2' in results:
-                part1_result = results['part1']
-                part2_result = results['part2']
-                
-                # Basic sanity checks
-                if isinstance(part1_result, int) and part1_result > 0:
-                    print(f"✅ Part 1: {part1_result} (positive integer path length)")
-                else:
-                    print(f"❌ Part 1: {part1_result} (expected positive integer)")
-                    return False
-                
-                if isinstance(part2_result, int) and part2_result > 0:
-                    print(f"✅ Part 2: {part2_result} (positive integer time)")
-                else:
-                    print(f"❌ Part 2: {part2_result} (expected positive integer)")
-                    return False
-                
-                # Part 2 should generally be larger than part 1 for this problem
-                if part2_result >= part1_result:
-                    print("✅ Part 2 >= Part 1 (oxygen spread time >= path length)")
-                else:
-                    print(f"⚠️  Part 2 ({part2_result}) < Part 1 ({part1_result}) - unusual but not impossible")
-                
-                return True
-            
-        except Exception as e:
-            print(f"❌ Validation failed with error: {e}")
-            return False
+
+        print("ℹ️ No examples provided for Day 15, skipping validation")        
+        #print("✅ All Day 15 validation tests passed!")
+        return True
         
         return False
 

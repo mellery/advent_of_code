@@ -282,7 +282,26 @@ class Day11OptimizedSolution(AdventSolution):
             # Fallback: return the raw painting
             return painting
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
 
+        # Test cases for part 1
+        example_input = """.....
+.....
+..^..
+.....
+.....
+"""
+        expected_part1 = 6
+        
+        result = self.part1(example_input)
+        if result != expected_part1:
+            print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
+            return False
+        
+
+        print("✅ All Day 11 validation tests passed!")
+        return True
 
 
 def main():

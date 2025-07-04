@@ -276,7 +276,12 @@ class Day13OptimizedSolution(AdventSolution):
         game = OptimizedArcadeGame(input_data.strip(), free_play=True)
         return game.run_game_to_completion()
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
 
+        print("ℹ️ No examples provided for Day 13, skipping validation")        
+        #print("✅ All Day 13 validation tests passed!")
+        return True
 
 
 def main():

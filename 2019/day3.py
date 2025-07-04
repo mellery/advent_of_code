@@ -308,6 +308,29 @@ class Day3Solution(AdventSolution):
             print(f"\nPart 1 - Closest intersection: {closest_point} (distance: {closest_distance})")
             print(f"Part 2 - Optimal intersection: {optimal_point} (steps: {optimal_steps})")
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
+
+        # Test cases for part 1
+        example_input = """R75,D30,R83,U83,L12,D49,R71,U7,L72
+U62,R66,U55,R34,D71,R55,D58,R83"""
+        expected_part1 = 159
+        
+        result = self.part1(example_input)
+        if result != expected_part1:
+            print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
+            return False
+        
+        # Test cases for part 2
+        expected_part2 = 610
+        
+        result = self.part2(example_input)
+        if result != expected_part2:
+            print(f"Part 2 test failed for example input: expected {expected_part2}, got {result}")
+            return False
+        
+        print("✅ All Day 3 validation tests passed!")
+        return True
 
 def main():
     """Main execution function."""

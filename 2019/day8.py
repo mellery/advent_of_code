@@ -437,7 +437,14 @@ class Day8Solution(AdventSolution):
         print(f"Part 1 - Corruption checksum: {self.part1(input_data)}")
         print(f"Part 2 - Password decoded (see above)")
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
 
+        print("ℹ️ No examples provided for Day 15, skipping validation")        
+        #print("✅ All Day 15 validation tests passed!")
+        return True
+    
+    
 def main():
     """Main execution function."""
     solution = Day8Solution()

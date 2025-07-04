@@ -402,7 +402,38 @@ class Day19Solution(AdventSolution):
         if square_pos:
             print(f"  Part 2: {square_pos.x * 10000 + square_pos.y}")
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
 
+        # Test cases for part 1
+        example_input = """#.........
+.#........
+..##......
+...###....
+....###...
+.....####.
+......####
+......####
+.......###
+........##"""
+        expected_part1 = 27
+        
+        result = self.part1(example_input)
+        if result != expected_part1:
+            print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
+            return False
+        
+        # Test cases for part 2
+        expected_part2 = 250020
+        
+        result = self.part2(example_input)
+        if result != expected_part2:
+            print(f"Part 2 test failed for example input: expected {expected_part2}, got {result}")
+            return False
+        
+        print("✅ All Day 19 validation tests passed!")
+        return True
+    
 def main():
     """Main execution function."""
     solution = Day19Solution()
