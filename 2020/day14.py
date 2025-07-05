@@ -390,7 +390,35 @@ class Day14Solution(AdventSolution):
             }
         }
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
 
+        # Test cases for part 1
+        example_input_part1 = """mask = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X
+mem[8] = 11
+mem[7] = 101
+mem[8] = 0"""
+        expected_part1 = 165
+        
+        result = self.part1(example_input_part1)
+        if result != expected_part1:
+            print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
+            return False
+        
+        # Test cases for part 2 (different example needed)
+        example_input_part2 = """mask = 000000000000000000000000000000X1001X
+mem[42] = 100
+mask = 00000000000000000000000000000000X0XX
+mem[26] = 1"""
+        expected_part2 = 208
+        
+        result = self.part2(example_input_part2)
+        if result != expected_part2:
+            print(f"Part 2 test failed for example input: expected {expected_part2}, got {result}")
+            return False
+        
+        print("✅ All Day 14 validation tests passed!")
+        return True
 
 
 def main():
