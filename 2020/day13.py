@@ -430,6 +430,28 @@ class Day13Solution(AdventSolution):
                 'crt_advantage': 'Scales efficiently with large bus IDs'
             }
         }
+    
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
+        # Test case from problem description
+        test_input = """939
+7,13,x,x,59,x,31,19"""
+        
+        expected_part1 = 295
+        expected_part2 = 1068781
+        
+        result1 = self.part1(test_input)
+        if result1 != expected_part1:
+            print(f"Part 1 test failed: expected {expected_part1}, got {result1}")
+            return False
+        
+        result2 = self.part2(test_input)
+        if result2 != expected_part2:
+            print(f"Part 2 test failed: expected {expected_part2}, got {result2}")
+            return False
+        
+        print("✅ All Day 13 validation tests passed!")
+        return True
 
 
 

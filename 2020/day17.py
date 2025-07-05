@@ -170,6 +170,30 @@ class Day17OptimizedSolution(AdventSolution):
         """Part 2: 4D Conway Cubes simulation."""
         return simulate_conway_cubes_4d(input_data, 6)
 
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
+
+        # Test cases for part 1
+        example_input = """.#.
+..#
+###"""
+        expected_part1 = 112
+
+        result = self.part1(example_input)
+        if result != expected_part1:
+            print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
+            return False
+        
+        # Test cases for part 2
+        expected_part2 = 848
+        
+        result = self.part2(example_input)
+        if result != expected_part2:
+            print(f"Part 2 test failed for example input: expected {expected_part2}, got {result}")
+            return False
+
+        print("✅ All Day 17 validation tests passed!")
+        return True
 
 def main():
     """Main execution function."""

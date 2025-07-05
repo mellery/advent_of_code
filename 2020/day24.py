@@ -38,7 +38,7 @@ NEIGHBOR_OFFSETS = list(DIRECTIONS.values())
 def parse_directions_optimized(line: str) -> List[str]:
     """
     Optimized direction parsing using direct character scanning.
-    
+
     Much faster than string matching and replacement.
     """
     directions = []
@@ -51,7 +51,7 @@ def parse_directions_optimized(line: str) -> List[str]:
                 directions.append(two_char)
                 i += 2
                 continue
-        
+
         # Check one-character directions
         one_char = line[i]
         if one_char in DIRECTIONS:
@@ -59,14 +59,14 @@ def parse_directions_optimized(line: str) -> List[str]:
             i += 1
         else:
             i += 1  # Skip invalid characters
-    
+
     return directions
 
 
 def get_tile_position_optimized(directions: List[str]) -> Tuple[int, int]:
     """
     Get final tile position using integer axial coordinates.
-    
+
     Axial coordinates are much more efficient than floating point.
     """
     q, r = 0, 0
@@ -96,7 +96,7 @@ def count_black_neighbors(pos: Tuple[int, int], black_tiles: Set[Tuple[int, int]
 def simulate_day_optimized(black_tiles: Set[Tuple[int, int]]) -> Set[Tuple[int, int]]:
     """
     Optimized daily simulation using sets and minimal allocations.
-    
+
     Only considers tiles that could possibly change state.
     """
     # Find all tiles that need to be checked (black tiles + their neighbors)
@@ -105,13 +105,13 @@ def simulate_day_optimized(black_tiles: Set[Tuple[int, int]]) -> Set[Tuple[int, 
         q, r = tile
         for dq, dr in NEIGHBOR_OFFSETS:
             candidates.add((q + dq, r + dr))
-    
+
     new_black_tiles = set()
-    
+
     for tile in candidates:
         black_neighbors = count_black_neighbors(tile, black_tiles)
         is_black = tile in black_tiles
-        
+
         if is_black:
             # Black tile stays black if it has 1 or 2 black neighbors
             if black_neighbors == 1 or black_neighbors == 2:
@@ -120,53 +120,95 @@ def simulate_day_optimized(black_tiles: Set[Tuple[int, int]]) -> Set[Tuple[int, 
             # White tile becomes black if it has exactly 2 black neighbors
             if black_neighbors == 2:
                 new_black_tiles.add(tile)
-    
+
     return new_black_tiles
 
 
 class Day24OptimizedSolution(AdventSolution):
     """Optimized solution for Advent of Code 2020 Day 24."""
-    
+
     def __init__(self):
         super().__init__(year=2020, day=24, title="Lobby Layout (Optimized)")
-    
+
     def part1(self, input_data: str) -> Any:
         """Part 1: Count black tiles after initial flipping."""
         lines = input_data.strip().split('\n')
         black_tiles = set()
-        
+
         for line in lines:
             directions = parse_directions_optimized(line.strip())
             tile_pos = get_tile_position_optimized(directions)
-            
+
             # Flip tile (toggle presence in set)
             if tile_pos in black_tiles:
                 black_tiles.remove(tile_pos)
             else:
                 black_tiles.add(tile_pos)
-        
+
         return len(black_tiles)
-    
+
     def part2(self, input_data: str) -> Any:
         """Part 2: Count black tiles after 100 days."""
         lines = input_data.strip().split('\n')
         black_tiles = set()
-        
+
         # Initial setup (same as part 1)
         for line in lines:
             directions = parse_directions_optimized(line.strip())
             tile_pos = get_tile_position_optimized(directions)
-            
+
             if tile_pos in black_tiles:
                 black_tiles.remove(tile_pos)
             else:
                 black_tiles.add(tile_pos)
-        
+
         # Simulate 100 days efficiently
         for _ in range(100):
             black_tiles = simulate_day_optimized(black_tiles)
-        
+
         return len(black_tiles)
+
+    def validate(self, expected_part1=None, expected_part2=None) -> bool:
+        """Validate solution with test cases."""
+
+        # Test cases for part 1
+        example_input = """sesenwnenenewseeswwswswwnenewsewsw
+neeenesenwnwwswnenewnwwsewnenwseswesw
+seswneswswsenwwnwse
+nwnwneseeswswnenewneswwnewseswneseene
+swweswneswnenwsewnwneneseenw
+eesenwseswswnenwswnwnwsewwnwsene
+sewnenenenesenwsewnenwwwse
+wenwwweseeeweswwwnwwe
+wsweesenenewnwwnwsenewsenwwsesesenwne
+neeswseenwwswnwswswnw
+nenwswwsewswnenenewsenwsenwnesesenew
+enewnwewneswsewnwswenweswnenwsenwsw
+sweneswneswneneenwnewenewwneswswnese
+swwesenesewenwneswnwwneseswwne
+enesenwswwswneneswsenwnewswseenwsese
+wnwnesenesenenwwnenwsewesewsesesew
+nenewswnwewswnenesenwnesewesw
+eneswnwswnwsenenwnwnwwseeswneewsenese
+neswnwewnwnwseenwseesewsenwsweewe
+wseweeenwnesenwwwswnew"""
+        expected_part1 = 10
+
+        result = self.part1(example_input)
+        if result != expected_part1:
+            print(f"Part 1 test failed for example input: expected {expected_part1}, got {result}")
+            return False
+
+        # Test cases for part 2
+        expected_part2 = 2208
+
+        result = self.part2(example_input)
+        if result != expected_part2:
+            print(f"Part 2 test failed for example input: expected {expected_part2}, got {result}")
+            return False
+
+        print("✅ All Day 24 validation tests passed!")
+        return True
 
 
 def main():
